@@ -1,2 +1,9 @@
+# name
+webServer
+
+# obj
+*.o
+
+# testers
 ubuntu_cgi_tester
 ubuntu_tester
