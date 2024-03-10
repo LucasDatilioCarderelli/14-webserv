@@ -1,15 +1,3 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: ldatilio <ldatilio@student.42sp.org.br>    +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2023/09/17 22:38:37 by ldatilio          #+#    #+#              #
-#    Updated: 2023/10/28 16:02:24 by ldatilio         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
-
 NAME	=	webServer
 
 INCLUDE	=	-I ./includes
@@ -18,7 +6,7 @@ MKDIR_P	=	mkdir -p
 CC		=	c++ -Wall -Wextra -Werror -O3 -std=c++98
 CC      +=	-pedantic-errors -Wshadow -Wno-shadow
 
-FILES	=	main.cpp
+FILES	=	main.cpp Logger.cpp
 
 SRC_DIR	=	sources/
 OBJ_DIR	=	build/
@@ -57,7 +45,7 @@ $(OBJ_DIR):
 	@$(MKDIR_P) $(OBJ_DIR)
 
 clean:
-	@rm -fr $(OBJ_DIR) *_shrubbery
+	@rm -fr $(OBJ_DIR)
 	@echo $(ITALIC_LIGHTER_YELLOW)"Objects deleted"$(RESET_COLOR)
 
 fclean:		clean
@@ -66,12 +54,7 @@ fclean:		clean
 
 re:			fclean all
 
-val:		all
-	valgrind ./$(NAME) 3 5 9 7 4
+run:		all
+	@./$(NAME)
 
-test:		all
-	./$(NAME) 3 5 9 7 4
-	./$(NAME) `shuf -i 1-100000 -n 3000 | tr "\n" " "`
-	./$(NAME) "-1" "2" || true
-
-.PHONY: all, clean, fclean, re, val, test
+.PHONY: all, clean, fclean, re, run
