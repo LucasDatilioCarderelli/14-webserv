@@ -6,7 +6,7 @@ MKDIR_P	=	mkdir -p
 CC		=	c++ -Wall -Wextra -Werror -O3 -std=c++98
 CC      +=	-pedantic-errors -Wshadow -Wno-shadow
 
-FILES	=	main.cpp Logger.cpp
+FILES	=	main.cpp
 
 SRC_DIR	=	sources/
 OBJ_DIR	=	build/
