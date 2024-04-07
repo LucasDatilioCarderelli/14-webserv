@@ -1,12 +1,19 @@
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <string.h>
-#include <iostream>
+#ifndef WEBSERV_HPP
+#define WEBSERV_HPP
+
+#include <sys/socket.h> // for socket(), bind(), listen(), accept()
+#include <netinet/in.h> // for sockaddr_in
+#include <unistd.h> // for close()
+#include <string.h> // for memset()
+#include <iostream> // for std::cout
 #include <csignal> // or #include <signal.h>
 #include <cstdlib> // or #include <stdlib.h>
-#include "Logger.hpp"
+#include <vector> // for std::vector
+#include "Logger.hpp" // For print logs
+// #include "Server.hpp"
 
 
 // Global logger object
-Logger logger;
+static Logger logger;
+
+#endif
