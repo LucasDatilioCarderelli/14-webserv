@@ -7,3 +7,6 @@ webServer
 # testers
 ubuntu_cgi_tester
 ubuntu_tester
+
+*.tmp
+*.txt
