@@ -6,7 +6,7 @@ MKDIR_P	=	mkdir -p
 CC		=	c++ -Wall -Wextra -Werror -O3 -std=c++98
 CC      +=	-pedantic-errors -Wshadow -Wno-shadow
 
-FILES	=	main.cpp
+FILES	=	$(shell find $(SRC_DIR) -name '*.cpp'  | sed 's|$(SRC_DIR)||')
 
 SRC_DIR	=	sources/
 OBJ_DIR	=	build/
@@ -42,7 +42,7 @@ $(OBJ_DIR)%.o:	$(SRC_DIR)%.cpp
 	@$(CC) $(INCLUDE) -c $< -o $@
 
 $(OBJ_DIR):
-	@$(MKDIR_P) $(OBJ_DIR)
+	@$(MKDIR_P) $(dir $(OBJ))
 
 clean:
 	@rm -fr $(OBJ_DIR)
