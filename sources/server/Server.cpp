@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "Request.hpp"
 
 
 Server::Server() {
@@ -114,10 +115,31 @@ void Server::run() {
                     return;
                 }
 
+                // Tratar a requisição
+                Request request;
+                request.parseRequest(buffer);
+
+
                 std::string header = "\r\nContent-Type: text/html\r\nConnection: Close\r\n\r\n";
-                std::string response = "HTTP/1.1 200 OK" + header + "<h1> Hello, world! </h1>\n";
+
+                std::string statusCode = "";
+                if (request.getPath() != "/") {
+                    statusCode = "404 Not Found";
+                } else {
+                    statusCode = "200 OK";
+                }
+                std::string body = "";
+                if (statusCode == "404 Not Found") {
+                    body = "<html><body><h1>404 Not Found</h1></body></html>";
+                } else {
+                    body = "<html><body><h1>200 OK</h1></body></html>";
+                }
+                std::string response = "HTTP/1.1 " + statusCode + header + body + "\n";
+                std::string logMessage = request.makelog() + " " + statusCode;
                 send(events[i].data.fd, response.c_str(), response.size(), 0);
-                logger.log("\"GET /hello HTTP1.1\" 200", Logger::INFO);
+                logger.log(logMessage, Logger::INFO);
+
+
                 shutdown(events[i].data.fd, SHUT_WR); // Encerra a escrita no socket
                 close(events[i].data.fd); // Fecha o socket
             }
