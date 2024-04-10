@@ -1,8 +1,9 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-// #include "Logger.hpp"
 #include "webserv.hpp"
+#include "Config.hpp"
+
 #include <fcntl.h> // for non-blocking sockets
 #include <cerrno> // for errno
 #include <sys/epoll.h> // for multiplexing I/O
@@ -11,8 +12,10 @@
 
 
 class Server {
+
 public:
     Server();
+    Server(std::vector<ServerConfig> servers);
     ~Server();
 
     void run();

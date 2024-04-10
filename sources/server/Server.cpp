@@ -1,9 +1,15 @@
 #include "Server.hpp"
 #include "Request.hpp"
+#include "utils.hpp"
 
 
 Server::Server() {
     logger.log("Webserv starting", Logger::INFO);
+}
+
+Server::Server(std::vector<ServerConfig> servers) {
+    std::string numberOfServers = numberToString(servers.size());
+    logger.log("Webserv starting " + numberOfServers + " servers", Logger::INFO);
 }
 
 Server::~Server() {
