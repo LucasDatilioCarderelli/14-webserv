@@ -66,7 +66,7 @@ void Config::parseConfigFile() {
             servers.push_back(server);
         }
     }
-    printServers();
+    // printServers();
 }
 
 void printLocation(LocationConfig& location) {
