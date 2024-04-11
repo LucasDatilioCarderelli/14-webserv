@@ -12,6 +12,10 @@
 
 
 class Server {
+private:
+    std::vector<ServerConfig>   _servers;
+    std::vector<int>            _sockets;
+
 
 public:
     Server();
@@ -19,6 +23,10 @@ public:
     ~Server();
 
     void run();
+    void handleClientRequest(int client_fd);
+
+    void create_socket();
+    void accept_connections();
 };
 
 #endif

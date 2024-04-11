@@ -66,7 +66,7 @@ void Config::parseConfigFile() {
             servers.push_back(server);
         }
     }
-    // printServers();
+    // printServers(servers);
 }
 
 void printLocation(LocationConfig& location) {
@@ -83,7 +83,7 @@ void printLocation(LocationConfig& location) {
     std::cout << std::endl;
 }
 
-void Config::printServers() {
+void printServers(std::vector<ServerConfig>& servers) {
     for (size_t i = 0; i < servers.size(); i++) {
         std::cout << "Server " << i << std::endl;
         std::cout << "PORT          : " << servers[i].config.listen << std::endl;

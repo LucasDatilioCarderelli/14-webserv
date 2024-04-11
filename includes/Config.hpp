@@ -2,6 +2,8 @@
 #include <iostream>
 #include <vector>
 
+#pragma once
+
 
 struct DefaultConfig {
     std::string listen;
@@ -37,10 +39,10 @@ public:
     
     std::vector<ServerConfig> servers;
     void parseConfigFile();
-    void printServers();
 };
 
-
+void printServers(std::vector<ServerConfig>& servers);
+void printLocation(LocationConfig& location);
 
 /*
 server {
