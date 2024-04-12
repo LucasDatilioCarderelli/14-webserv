@@ -3,6 +3,7 @@
 
 #include "webserv.hpp"
 #include "Config.hpp"
+#include "Response.hpp"
 
 #include <fcntl.h> // for non-blocking sockets
 #include <cerrno> // for errno
