@@ -53,7 +53,7 @@ void Config::parseConfigFile() {
                 line = trimLine(line);
                 if (line.find("location ") != std::string::npos) {
                     LocationConfig location;
-                    location.location = line.substr(line.find(" ") + 1);
+                    location.location = line.substr(line.find(" ") + 1, line.find("{") - line.find(" ") - 2);
                     while (std::getline(_configFile, line) && line.find("}") == std::string::npos) {
                         line = trimLine(line);
                         setConfigValue(location.config, line);
