@@ -14,7 +14,6 @@ Server::~Server() {
 }
 
 Server::Server(std::vector<ServerConfig> servers) : _servers(servers) {
-    // printServers(_servers);
     logger.log("Webserv starting", Logger::INFO);
 }
 
@@ -25,8 +24,6 @@ void Server::run() {
 
 void Server::create_socket() {
     for (int i = 0; i < (int)_servers.size(); i++) {
-    // for (int i = 0; i < 1; i++) {
-        // Creating the server socket
         int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
         if (socket_fd < 0) {
             logger.log("socket failed", Logger::ERROR);
@@ -43,7 +40,6 @@ void Server::create_socket() {
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = INADDR_ANY;
         address.sin_port = htons(stringToNumber(_servers[i].config.listen));
-        // address.sin_port = htons(stringToNumber("8082"));
 
         // Bind the socket
         if (bind(socket_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
@@ -119,30 +115,16 @@ void Server::handleClientRequest(int connection_socket) {
         return;
     }
 
+    std::cout << buffer << std::endl;
+
     // Tratar a requisição
     Request request;
     request.parseRequest(buffer);
 
+    Response responseClient(request, _servers);
+    std::string response = responseClient.makeResponse(request);
 
-    std::string header = "\r\nContent-Type: text/html\r\nConnection: Close\r\n\r\n";
-
-    std::string statusCode = "";
-    if (request.getPath() != "/") {
-        statusCode = "404 Not Found";
-    } else {
-        statusCode = "200 OK";
-    }
-    std::string body = "";
-    if (statusCode == "404 Not Found") {
-        body = "<html><body><h1>404 Not Found</h1></body></html>";
-    } else {
-        body = "<html><body><h1>200 OK</h1></body></html>";
-    }
-    std::string response = "HTTP/1.1 " + statusCode + header + body + "\n";
-    std::string logMessage = request.makelog() + " " + statusCode;
     send(connection_socket, response.c_str(), response.size(), 0);
-    logger.log(logMessage, Logger::INFO);
-
 
     shutdown(connection_socket, SHUT_WR); // Encerra a escrita no socket
     close(connection_socket); // Fecha o socket
