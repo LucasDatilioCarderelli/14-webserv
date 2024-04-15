@@ -14,6 +14,8 @@ class Response {
 private:
     std::vector<ServerConfig>   _servers;
     int                         _status;
+    DefaultConfig*              _config;
+    std::string                 _response;
 
 public:
     Response();
@@ -24,6 +26,8 @@ public:
     void validateServer(Request& request, std::vector<ServerConfig>& servers);
     int validatePath(Request& request, ServerConfig& servers);
     void validateLocation(Request& request, LocationConfig& location);
+
+    std::string makeResponse(Request& request);
 };
 
 #endif

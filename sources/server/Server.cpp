@@ -115,32 +115,16 @@ void Server::handleClientRequest(int connection_socket) {
         return;
     }
 
+    std::cout << buffer << std::endl;
+
     // Tratar a requisição
     Request request;
     request.parseRequest(buffer);
 
     Response responseClient(request, _servers);
+    std::string response = responseClient.makeResponse(request);
 
-
-    std::string header = "\r\nContent-Type: text/html\r\nConnection: Close\r\n\r\n";
-
-    std::string statusCode = "";
-    if (request.getPath() != "/") {
-        statusCode = "404 Not Found";
-    } else {
-        statusCode = "200 OK";
-    }
-    std::string body = "";
-    if (statusCode == "404 Not Found") {
-        body = "<html><body><h1>404 Not Found</h1></body></html>";
-    } else {
-        body = "<html><body><h1>200 OK</h1></body></html>";
-    }
-    std::string response = "HTTP/1.1 " + statusCode + header + body + "\n";
-    std::string logMessage = request.makelog() + " " + statusCode;
     send(connection_socket, response.c_str(), response.size(), 0);
-    logger.log(logMessage, Logger::INFO);
-
 
     shutdown(connection_socket, SHUT_WR); // Encerra a escrita no socket
     close(connection_socket); // Fecha o socket
