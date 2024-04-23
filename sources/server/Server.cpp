@@ -1,8 +1,4 @@
 #include "Server.hpp"
-#include "Request.hpp"
-#include "utils.hpp"
-#include <poll.h>
-#include "Config.hpp"
 
 
 Server::Server() {
@@ -24,39 +20,50 @@ void Server::run() {
 
 void Server::create_socket() {
     for (int i = 0; i < (int)_servers.size(); i++) {
+        // create a socket
         int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
         if (socket_fd < 0) {
-            logger.log("socket failed", Logger::ERROR);
+            logger.log("create socket failed", Logger::ERROR);
+            close(socket_fd);
+            exit(-1);
+        }
+        // attach the socket to the port provided
+        int opt = 1;
+        if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
+            logger.log("setsockopt failed", Logger::ERROR);
+            close(socket_fd);
+            exit(-1);
+        }
+        // set the socket to non-blocking
+        if (fcntl(socket_fd, F_SETFL, O_NONBLOCK) < 0) {
+            logger.log("fcntl failed", Logger::ERROR);
+            close(socket_fd);
             exit(-1);
         }
 
-        // Anexando o socket à porta fornecida pela configuração do servidor
-        int opt = 1;
-        if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
-            logger.log("setsockopt", Logger::ERROR);
-            exit(-1);
-        }
         struct sockaddr_in address;
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = INADDR_ANY;
         address.sin_port = htons(stringToNumber(_servers[i].config.listen));
 
-        // Bind the socket
+        // Bind the socket to the port
         if (bind(socket_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-            logger.log("bind failed", Logger::ERROR);
-            exit(-1);
+            logger.log("bind failed on: " + _servers[i].config.listen, Logger::ERROR);
+            close(socket_fd);
+        } else {
+            // Listen for incoming connections on the socket
+            if (listen(socket_fd, SOMAXCONN) < 0) {
+                logger.log("listen failed", Logger::ERROR);
+                close(socket_fd);
+                exit(-1);
+            }
+            // add the server file descriptor to socket vector
+            _sockets.push_back(socket_fd);
+        
+            logger.log("Server listening on: http://" + 
+                _servers[i].config.server_name + ":" + 
+                _servers[i].config.listen, Logger::INFO);
         }
-
-        // Listen for incoming connections
-        if (listen(socket_fd, SOMAXCONN) < 0) {
-            logger.log("listen", Logger::ERROR);
-            exit(-1);
-        }
-
-        // Adicionar o descritor de arquivo do servidor à lista de descritores de arquivo do servidor
-        _sockets.push_back(socket_fd);
-    
-        logger.log("Server listening on port: " + _servers[i].config.listen, Logger::INFO);
     }
 }
 
@@ -64,43 +71,35 @@ void Server::create_socket() {
 void Server::accept_connections() {
     int num_fds = _sockets.size();
     struct pollfd poll_fds[num_fds];
+    int timeout = (5 * 60 * 1000); // 5 minute (in milliseconds)
 
+    // loop for accepting connections
     while (true) {
         for (int i = 0; i < num_fds; i++) {
             poll_fds[i].fd = _sockets[i];
             poll_fds[i].events = POLLIN;
         }
 
-        if (poll(poll_fds, num_fds, -1) < 0) {
-            logger.log("poll failed", Logger::ERROR);
+        // wait for incoming connections
+        if (poll(poll_fds, num_fds, timeout) <= 0) {
+            logger.log("poll failed or timeout", Logger::WARNING);
             exit(-1);
         }
 
+        // check for incoming connections
         for (int i = 0; i < num_fds; i++) {
-            int server_socket = poll_fds[i].fd;
+            int sockfd = poll_fds[i].fd;
             if (poll_fds[i].revents & POLLIN) {
                 struct sockaddr_in address;
                 socklen_t addrlen = sizeof(address);
 
-                int connection_socket = accept(server_socket, (struct sockaddr *)&address, &addrlen);
-                if (connection_socket < 0) {
+                int connection_socket = accept(sockfd, (struct sockaddr *)&address, &addrlen);
+                if (connection_socket <= 0) {
                     logger.log("accept failed", Logger::ERROR);
-                    exit(-1);
-                }
-
-                // // Tornar o socket não bloqueante
-                // int flags = fcntl(connection_socket, F_GETFL, 0);
-                // if (flags == -1) {
-                //     logger.log("fcntl get", Logger::ERROR);
-                //     exit(-1);
-                // }
-                // flags |= O_NONBLOCK;
-                // if (fcntl(connection_socket, F_SETFL, flags) == -1) {
-                //     logger.log("fcntl set", Logger::ERROR);
-                //     exit(-1);
-                // }
-
-                handleClientRequest(connection_socket);
+                    close(sockfd);
+                } else {
+                    handleClientRequest(connection_socket);
+                }   
             }
         }
     }
@@ -108,24 +107,31 @@ void Server::accept_connections() {
 
 
 void Server::handleClientRequest(int connection_socket) {
-    char buffer[1024] = {0};
-    long valread = recv(connection_socket, buffer, sizeof(buffer), 0);
-    if (valread < 0) {
-        logger.log("recv", Logger::ERROR);
-        return;
+    std::string buffer;
+    const size_t bufferSize = 4096;
+    char recv_buffer[bufferSize];
+    int bytes_received = 0;
+
+    // receive the request
+    while ((bytes_received = recv(connection_socket, recv_buffer, sizeof(recv_buffer), 0)) > 0) {
+        buffer.append(recv_buffer, bytes_received);
+        if (buffer.find("\r\n\r\n") != std::string::npos) {
+            break;
+        }
     }
 
-    std::cout << buffer << std::endl;
-
-    // Tratar a requisição
+    // parse the request
     Request request;
     request.parseRequest(buffer);
 
+    // make the response
     Response responseClient(request, _servers);
     std::string response = responseClient.makeResponse(request);
 
+    // send the response
     send(connection_socket, response.c_str(), response.size(), 0);
 
-    shutdown(connection_socket, SHUT_WR); // Encerra a escrita no socket
-    close(connection_socket); // Fecha o socket
+    // close the connection
+    shutdown(connection_socket, SHUT_WR);
+    close(connection_socket);
 }
