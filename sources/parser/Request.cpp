@@ -49,8 +49,6 @@ void Request::parseRequest(std::string request) {
     while (std::getline(requestStream, line)) {
         _body += line + "\n";
     }
-
-    // printRequest();
 }
 
 void Request::printRequest() {
