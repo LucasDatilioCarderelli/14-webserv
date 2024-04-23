@@ -28,7 +28,7 @@ void Logger::log(const std::string& message, Level level) {
 std::string Logger::getCurrentTime() {
     time_t now = time(0);
     struct tm * timeinfo = localtime(&now);
-    char buffer[80];
-    strftime(buffer, 80, "%y/%m/%d %H:%M:%S", timeinfo);
+    char buffer[18];
+    strftime(buffer, 18, "%y/%m/%d %H:%M:%S", timeinfo);
     return std::string(buffer);
 }
