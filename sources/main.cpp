@@ -4,6 +4,7 @@
 
 
 static void sigint_handler(int sig) {
+    std::cout << std::endl;
     logger.log("SIGINT received ", Logger::WARNING);
     exit(sig);
 }
