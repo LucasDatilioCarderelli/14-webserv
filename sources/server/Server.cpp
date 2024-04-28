@@ -116,7 +116,6 @@ void Server::handleClientRequest(int connection_socket) {
     if (request.getMethod() == "POST" && request.getContentType() == "multipart/form-data") {
         receiveBody(connection_socket, request);
     }
-    request.printRequest();
 
     Response responseClient(request, _servers);
     std::string response = responseClient.makeResponse(request);
@@ -143,10 +142,10 @@ void Server::receiveHeaders(int connection_socket, std::string& buffer) {
 
 
 void Server::receiveBody(int connection_socket, Request& request) {
-    size_t bufferSize = 1;
+    size_t bufferSize = 1024;
     char recv_buffer[bufferSize];
     int bytes_received = 0;
-    int total_bytes_received = 0;
+    size_t total_bytes_received = 0;
     std::string body = "";
     std::string boundary_end = request.getBoundary() + "--";
 
@@ -155,7 +154,7 @@ void Server::receiveBody(int connection_socket, Request& request) {
         body.append(recv_buffer, bytes_received);
         if (body.find(boundary_end) != std::string::npos) {
             break;
+        }
     }
-
     request.setBody(body);
 }
