@@ -108,30 +108,54 @@ void Server::accept_connections() {
 
 void Server::handleClientRequest(int connection_socket) {
     std::string buffer;
-    const size_t bufferSize = 4096;
+
+    receiveHeaders(connection_socket, buffer);
+
+    Request request;
+    request.parseRequest(buffer.c_str());
+    if (request.getMethod() == "POST" && request.getContentType() == "multipart/form-data") {
+        receiveBody(connection_socket, request);
+    }
+    request.printRequest();
+
+    Response responseClient(request, _servers);
+    std::string response = responseClient.makeResponse(request);
+
+    send(connection_socket, response.c_str(), response.size(), 0);
+
+    shutdown(connection_socket, SHUT_WR);
+    close(connection_socket);
+}
+
+
+void Server::receiveHeaders(int connection_socket, std::string& buffer) {
+    size_t bufferSize = 1;
     char recv_buffer[bufferSize];
     int bytes_received = 0;
 
-    // receive the request
-    while ((bytes_received = recv(connection_socket, recv_buffer, sizeof(recv_buffer), 0)) > 0) {
+    while ((bytes_received = recv(connection_socket, recv_buffer, bufferSize, 0)) > 0) {
         buffer.append(recv_buffer, bytes_received);
         if (buffer.find("\r\n\r\n") != std::string::npos) {
             break;
         }
     }
+}
 
-    // parse the request
-    Request request;
-    request.parseRequest(buffer);
 
-    // make the response
-    Response responseClient(request, _servers);
-    std::string response = responseClient.makeResponse(request);
+void Server::receiveBody(int connection_socket, Request& request) {
+    size_t bufferSize = 1;
+    char recv_buffer[bufferSize];
+    int bytes_received = 0;
+    int total_bytes_received = 0;
+    std::string body = "";
+    std::string boundary_end = request.getBoundary() + "--";
 
-    // send the response
-    send(connection_socket, response.c_str(), response.size(), 0);
+    while ((bytes_received = recv(connection_socket, recv_buffer, bufferSize, 0)) > 0) {
+        total_bytes_received += bytes_received;
+        body.append(recv_buffer, bytes_received);
+        if (body.find(boundary_end) != std::string::npos) {
+            break;
+    }
 
-    // close the connection
-    shutdown(connection_socket, SHUT_WR);
-    close(connection_socket);
+    request.setBody(body);
 }

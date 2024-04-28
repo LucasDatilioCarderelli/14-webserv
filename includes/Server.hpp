@@ -27,6 +27,9 @@ public:
     ~Server();
 
     void run();
+
+    void receiveHeaders(int connection_socket, std::string& buffer);
+    void receiveBody(int connection_socket, Request& request);
     void handleClientRequest(int client_fd);
 
     void create_socket();

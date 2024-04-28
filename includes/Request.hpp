@@ -15,6 +15,7 @@ private:
     std::string _contentType;
     std::string _contentLength;
     std::string _body;
+    std::string _boundary;
 
 public:
     Request();
@@ -40,6 +41,9 @@ public:
     std::string getContentType() { return _contentType; }
     std::string getContentLength() { return _contentLength; }
     std::string getBody() { return _body; }
+    std::string getBoundary() { return _boundary; }
+
+    void setBody(std::string body) { _body = body; }
 };
 
 #endif
