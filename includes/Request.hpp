@@ -17,21 +17,20 @@ private:
     std::string _body;
     std::string _boundary;
 
+    void parseRequestLine(std::istringstream& requestStream);
+    void parseHeaders(std::istringstream& requestStream);
+    void parseBody(std::istringstream& requestStream);
+    void parseHostHeader(const std::string& headerValuem);
+    void parseContentTypeHeader(const std::string& headerValue, std::istringstream& headerStrea);
+    void parseContentLengthHeader(const std::string& headerValue);
+
 public:
     Request();
     ~Request();
 
     void parseRequest(std::string request);
     void printRequest();
-    std::string makelog() {
-        std::string log = "\"";
-        log += _method + " ";
-        log += _path + " ";
-        log += _version + " ";
-        log += _host + ":";
-        log += _port + "\"";
-        return log;
-    }
+    std::string makelog();
 
     std::string getMethod() { return _method; }
     std::string getPath() { return _path; }
