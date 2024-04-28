@@ -7,6 +7,11 @@
 #include "Request.hpp"
 #include "utils.hpp"
 
+#include <fstream>
+#include <sstream>
+#include <string>
+
+
 static MimeType mimeType;
 static StatusCode statusCode;
 

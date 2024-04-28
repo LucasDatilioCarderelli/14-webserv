@@ -1,23 +1,83 @@
 #include "Response.hpp"
 
 
+void saveFileFromRequestBody(const std::string& requestBody) {
+    std::istringstream requestStream(requestBody);
+
+    std::string boundary;
+    std::getline(requestStream, boundary);
+    boundary = boundary.substr(0, boundary.size() - 1);
+
+    std::string contentDisposition;
+    std::getline(requestStream, contentDisposition);
+
+    std::string fileName = contentDisposition.substr(contentDisposition.find("filename=") + 10);
+    fileName = fileName.substr(0, fileName.size() - 2); // remove the trailing quote
+
+    std::string contentType;
+    std::getline(requestStream, contentType);
+
+    std::string blankLine;
+    std::getline(requestStream, blankLine);
+
+    std::ofstream outputFile;
+    std::string filePath = "./www/uploads/" + fileName;
+    std::string fileExtension = fileName.substr(fileName.find_last_of(".") + 1);
+    if (fileExtension == "txt" || fileExtension == "html" || fileExtension == "css" || fileExtension == "js") {
+        outputFile.open(filePath.c_str());
+    } else {
+        outputFile.open(filePath.c_str(), std::ios::binary);
+    }
+
+    std::string body;
+    std::getline(requestStream, body);
+
+    size_t body_pos = requestBody.find("\r\n\r\n", boundary.size() + 2) + 4; // 4 is the length of "\r\n\r\n"
+    size_t boundary_end_pos = requestBody.find(boundary + "--", body_pos);
+
+    std::string fileContent = requestBody.substr(body_pos, boundary_end_pos - body_pos);
+    outputFile.write(fileContent.c_str(), fileContent.size());
+
+    outputFile.close();
+}
+
+
+
+std::string htmlEncode(const std::string& data) {
+    std::string buffer;
+    buffer.reserve(data.size());
+    for(size_t pos = 0; pos != data.size(); ++pos) {
+        switch(data[pos]) {
+            case '&':  buffer.append("&amp;");       break;
+            case '\"': buffer.append("&quot;");      break;
+            case '\'': buffer.append("&apos;");      break;
+            case '<':  buffer.append("&lt;");        break;
+            case '>':  buffer.append("&gt;");        break;
+            default:   buffer.append(&data[pos], 1); break;
+        }
+    }
+    return buffer;
+}
+
+
+/* ** Read the content of a file and return it as a string */
+std::string readUploadedFile(const std::string& path) {
+    std::ifstream file(path.c_str());
+    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    file.close();
+    return htmlEncode(content);
+}
+
+
 Response::Response() {}
 Response::~Response() {}
+
 Response::Response(Request& request, std::vector<ServerConfig>& servers) : _servers(servers) {
-    std::cout << "Response constructor" << std::endl;
     _status = 200;
 
-    std::cout << "Request method: " << request.getMethod() << std::endl;
-    std::cout << "Request path: " << request.getPath() << std::endl;
-    std::cout << "Request version: " << request.getVersion() << std::endl;
-    std::cout << "Request host: " << request.getHost() << std::endl;
-    std::cout << "Request port: " << request.getPort() << std::endl;
-    std::cout << "Request content type: " << request.getContentType() << std::endl;
-    std::cout << "Request content length: " << request.getContentLength() << std::endl;
-    std::cout << "Request body: " << request.getBody() << std::endl;
+    // request.printRequest();
 
     validateServer(request, servers);
-    // makeResponse(request);
 }
 
 
@@ -26,40 +86,35 @@ void Response::validateServer(Request& request, std::vector<ServerConfig>& serve
         _status = 500;
         return;
     }
-    if (request.getVersion() != "HTTP/1.1") {
+    else if (request.getVersion() != "HTTP/1.1") {
         _status = 505;
         return;
     }
-    // validate the port and host
-    for (size_t i = 0; i < servers.size(); i++) {
 
+    for (size_t i = 0; i < servers.size(); i++) {
+        // validate the port and host
         if (servers[i].config.listen == request.getPort() && servers[i].config.server_name == request.getHost()) {
             validatePath(request, servers[i]);
-            std::cout << "\n" << _status << " " << statusCode.get(_status) << std::endl;
             return;
         }
-
     }
     _status = 502;
- 
-    std::cout << "\n" << _status << " " << statusCode.get(_status) << std::endl;
-
 }
 
 
 int Response::validatePath(Request& request, ServerConfig& server) {
     // validate the path
     if (request.getPath() == "/") {
-        std::cout << "PORT          : " << server.config.listen << std::endl;
-        std::cout << "SERVER_NAME   : " << server.config.server_name << std::endl;
-        std::cout << "ROOT          : " << server.config.root << std::endl;
-        std::cout << "INDEX         : " << server.config.index << std::endl;
-        std::cout << "ERROR_PAGE    : " << server.config.errorPage << std::endl;
-        std::cout << "AUTOINDEX     : " << server.config.autoindex << std::endl;
-        std::cout << "MAX_BODY_SIZE : " << server.config.maxBodySize << std::endl;
-        std::cout << "CGI           : " << server.config.cgi << std::endl;
-        std::cout << "METHODS       : " << server.config.allowedMethods << std::endl;
-        std::cout << "REDIRECTION   : " << server.config.httpRedirection << std::endl;
+        // std::cout << "PORT          : " << server.config.listen << std::endl;
+        // std::cout << "SERVER_NAME   : " << server.config.server_name << std::endl;
+        // std::cout << "ROOT          : " << server.config.root << std::endl;
+        // std::cout << "INDEX         : " << server.config.index << std::endl;
+        // std::cout << "ERROR_PAGE    : " << server.config.errorPage << std::endl;
+        // std::cout << "AUTOINDEX     : " << server.config.autoindex << std::endl;
+        // std::cout << "MAX_BODY_SIZE : " << server.config.maxBodySize << std::endl;
+        // std::cout << "CGI           : " << server.config.cgi << std::endl;
+        // std::cout << "METHODS       : " << server.config.allowedMethods << std::endl;
+        // std::cout << "REDIRECTION   : " << server.config.httpRedirection << std::endl;
         _config = &server.config;
         return 0;
     }
@@ -83,30 +138,54 @@ void Response::validateLocation(Request& request, LocationConfig& location) {
         return;
     }
     _config = &location.config;
-    printLocation(location);
+    // printLocation(location);
 }
 
 
 std::string Response::makeResponse(Request& request) {
-    std::string header = "\r\nContent-Type: text/html\r\nConnection: Close\r\n\r\n";
+    std::string header = "\r\nContent-Type: text/html\r\nConnection: Close\r\nServer: WebServ\r\n\r\n";
     std::string body = "";
-    if (_status == 200) {
+    
+    if (_status == 502) {
+        body = "<html><body><h1>502 Internal Server Error</h1></body></html>";
+    }
+    if (_status == 200 && request.getMethod() == "GET") {
+        std::string root = (_config->root == "") ? "./www" : _config->root;
+        std::string path = root + "/" + _config->index;
+        // std::cout << "Path: " << path << std::endl;
         // abre o arquivo de index
-        std::string path = _config->root + request.getPath() + _config->index;
-        std::cout << "Path: " << path << std::endl;
-        std::ifstream file(path.c_str());
-        // salva o conteudo do arquivo no body
-        body = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-        // body = "<html><body><h1>200 OK</h1> <form action='/uploads' method='post' enctype='multipart/form-data'> <input type='file' name='file'> <input type='submit' value='Upload'> </form> </body></html>";
-
+        // std::ifstream indexFile(path.c_str());
+        // if (indexFile.good()) {
+        //     // salva o conteudo do arquivo no body
+        //     body = std::string((std::istreambuf_iterator<char>(indexFile)), std::istreambuf_iterator<char>());
+        //     // body = "<html><body><h1>200 OK</h1> <form action='/uploads' method='post' enctype='multipart/form-data'> <input type='file' name='file'> <input type='submit' value='Upload'> </form> </body></html>";
+        //     indexFile.close();
+        // } else {
+        //     _status = 404;
+        //     indexFile.close();
+        // }
+        // body = "hello from make response";
+        // envia um uma pagina html com um post de um arquivo txt/plain
+        body = "<html><body><h1>200 OK</h1> <form action='#' method='post' enctype='multipart/form-data'> <input type='file' name='file'> <input type='submit' value='Upload'> </form> </body></html>";
     }
-    else {
+    if (_status == 404) {
+        // std::string errorPage = (_config->errorPage.empty()) ? _servers[0].config.errorPage : _config->errorPage;
+        // std::ifstream file(errorPage.c_str());
         body = "<html><body><h1>404 Not Found</h1></body></html>";
+        // body = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        // std::cout << "body: " << body << std::endl;
     }
-    std::string response = "HTTP/1.1 " + numberToString(_status) + statusCode.get(_status) + header + body + "\n";
-    std::string logMessage = request.makelog() + " " + numberToString(_status);
+    if (request.getMethod() == "POST") {
+        // std::cout << "POST" << std::endl;
+        // std::cout << "Body: " << request.getBody() << std::endl;
+        saveFileFromRequestBody(request.getBody());
+        // body = readUploadedFile("./www/uploads/output.txt");
+        body = "<meta charset='UTF-8'><html><body><h1>201 OK</h1> <pre>" + body + "</pre> </body></html>";
+        _status = 201;
+    }
+
+    std::string response = "HTTP/1.1 " + numberToString(_status) + " " + statusCode.get(_status) + header + body + "\n";
+    std::string logMessage = request.makelog() + " " + numberToString(_status) + " " + statusCode.get(_status);
     logger.log(logMessage, Logger::INFO);
-
-
     return response;
 }
