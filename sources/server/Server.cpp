@@ -44,11 +44,11 @@ void Server::create_socket() {
         struct sockaddr_in address;
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = INADDR_ANY;
-        address.sin_port = htons(stringToNumber(_servers[i].config.listen));
+        address.sin_port = htons(stringToNumber(_servers[i].listen));
 
         // Bind the socket to the port
         if (bind(socket_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-            logger.log("bind failed on: " + _servers[i].config.listen, Logger::ERROR);
+            logger.log("bind failed on: " + _servers[i].listen, Logger::ERROR);
             close(socket_fd);
         } else {
             // Listen for incoming connections on the socket
@@ -61,8 +61,8 @@ void Server::create_socket() {
             _sockets.push_back(socket_fd);
         
             logger.log("Server listening on: http://" + 
-                _servers[i].config.server_name + ":" + 
-                _servers[i].config.listen, Logger::INFO);
+                _servers[i].server_name + ":" + 
+                _servers[i].listen, Logger::INFO);
         }
     }
 }
@@ -80,9 +80,13 @@ void Server::accept_connections() {
         }
 
         // wait for incoming connections
-        if (poll(poll_fds, num_fds, timeout) <= 0) {
-            logger.log("poll failed or timeout", Logger::WARNING);
+        int ret = poll(poll_fds, num_fds, timeout);
+        if (ret < 0) {
+            logger.log("poll failed", Logger::WARNING);
             exit(-1);
+        } else if (ret == 0) {
+            logger.log("poll timeout", Logger::INFO);
+            continue;
         }
 
         // check for incoming connections

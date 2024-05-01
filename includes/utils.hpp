@@ -7,5 +7,6 @@
 
 std::string numberToString(int Number);
 int stringToNumber(std::string str);
+std::string trimLine(const std::string& line);
 
 #endif

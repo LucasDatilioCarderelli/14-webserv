@@ -13,3 +13,10 @@ int stringToNumber(std::string str) {
     ss >> number;
     return number;
 }
+
+std::string trimLine(const std::string& line) {
+    std::string trimmedLine = line;
+    trimmedLine.erase(0, trimmedLine.find_first_not_of(" \t"));
+    trimmedLine.erase(trimmedLine.find_last_not_of(" \t") + 1);
+    return trimmedLine;
+}
