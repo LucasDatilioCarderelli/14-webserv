@@ -67,7 +67,6 @@ void Server::create_socket() {
     }
 }
 
-
 void Server::accept_connections() {
     int num_fds = _sockets.size();
     struct pollfd poll_fds[num_fds];
@@ -105,11 +104,15 @@ void Server::accept_connections() {
     }
 }
 
-
 void Server::handleClientRequest(int connection_socket) {
     std::string buffer;
 
     receiveHeaders(connection_socket, buffer);
+
+    if (buffer.empty()) {
+        logger.log("Received empty request", Logger::WARNING);
+        return;
+    }
 
     Request request;
     request.parseRequest(buffer.c_str());
@@ -126,7 +129,6 @@ void Server::handleClientRequest(int connection_socket) {
     close(connection_socket);
 }
 
-
 void Server::receiveHeaders(int connection_socket, std::string& buffer) {
     size_t bufferSize = 1;
     char recv_buffer[bufferSize];
@@ -139,7 +141,6 @@ void Server::receiveHeaders(int connection_socket, std::string& buffer) {
         }
     }
 }
-
 
 void Server::receiveBody(int connection_socket, Request& request) {
     size_t bufferSize = 1024;
