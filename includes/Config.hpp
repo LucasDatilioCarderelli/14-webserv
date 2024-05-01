@@ -35,6 +35,9 @@ private:
     void setConfigValue(ServerConfig& server, std::string& line);
     void setConfigValue(DefaultConfig& config, std::string& line);
 
+    LocationConfig parseLocation(std::string line);
+    ServerConfig parseServer(std::string line);
+
 public:
     Config(const std::string& configFilePath);
     ~Config();

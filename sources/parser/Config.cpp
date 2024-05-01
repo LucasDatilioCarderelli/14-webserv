@@ -57,28 +57,36 @@ void Config::setConfigValue(ServerConfig& server, std::string& line) {
     }
 }
 
+LocationConfig Config::parseLocation(std::string line) {
+    LocationConfig location;
+    location.location = line.substr(line.find(" ") + 1, line.find("{") - line.find(" ") - 2);
+    while (std::getline(_configFile, line) && line.find("}") == std::string::npos) {
+        line = trimLine(line);
+        setConfigValue(location.config, line);
+    }
+    return location;
+}
+
+ServerConfig Config::parseServer(std::string line) {
+    ServerConfig server;
+    server.listen = "8080";
+    server.server_name = "localhost";
+    while (std::getline(_configFile, line) && line.find("}") == std::string::npos) {
+        line = trimLine(line);
+        if (line.find("location ") != std::string::npos) {
+            server.location.push_back(parseLocation(line));
+        } else {
+            setConfigValue(server, line);
+        }
+    }
+    return server;
+}
+
 void Config::parseConfigFile() {
     std::string line;
     while (std::getline(_configFile, line)) {
         if (line.find("server ") != std::string::npos) {
-            ServerConfig server;
-            server.listen = "8080";
-            server.server_name = "localhost";
-            while (std::getline(_configFile, line) && line.find("}") == std::string::npos) {
-                line = trimLine(line);
-                if (line.find("location ") != std::string::npos) {
-                    LocationConfig location;
-                    location.location = line.substr(line.find(" ") + 1, line.find("{") - line.find(" ") - 2);
-                    while (std::getline(_configFile, line) && line.find("}") == std::string::npos) {
-                        line = trimLine(line);
-                        setConfigValue(location.config, line);
-                    }
-                    server.location.push_back(location);
-                } else {
-                    setConfigValue(server, line);
-                }
-            }
-            servers.push_back(server);
+            servers.push_back(parseServer(line));
         }
     }
     printServers(servers, true);
