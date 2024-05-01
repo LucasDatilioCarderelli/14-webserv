@@ -10,6 +10,8 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <dirent.h>
+#include <sys/types.h>
 
 
 static MimeType mimeType;

@@ -1,6 +1,42 @@
 #include "Response.hpp"
 
 
+#include <dirent.h>
+#include <sys/types.h>
+#include <string>
+#include <sstream>
+
+std::string generateDirectoryListing(const std::string& path) {
+    DIR* dir;
+    struct dirent* ent;
+    std::ostringstream html;
+
+    html << "<html><body><h1>Index of " << path << "</h1><ul>";
+
+    if ((dir = opendir(path.c_str())) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
+            html << "<li><a href=\"" << ent->d_name << "\">" << ent->d_name << "</a></li>";
+        }
+        closedir(dir);
+    } else {
+        // Could not open directory
+        return "";
+    }
+
+    html << "</ul></body></html>";
+    return html.str();
+}
+
+
+Response::Response() {}
+Response::~Response() {}
+Response::Response(Request& request, std::vector<ServerConfig>& servers) : _servers(servers) {
+    _status = 200;
+    // getConfig(request, servers);
+
+    validateServer(request, servers);
+}
+
 void saveFileFromRequestBody(const std::string& requestBody) {
     std::istringstream requestStream(requestBody);
 
@@ -42,7 +78,6 @@ void saveFileFromRequestBody(const std::string& requestBody) {
 }
 
 
-
 std::string htmlEncode(const std::string& data) {
     std::string buffer;
     buffer.reserve(data.size());
@@ -60,24 +95,11 @@ std::string htmlEncode(const std::string& data) {
 }
 
 
-/* ** Read the content of a file and return it as a string */
 std::string readUploadedFile(const std::string& path) {
     std::ifstream file(path.c_str());
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     file.close();
     return htmlEncode(content);
-}
-
-
-Response::Response() {}
-Response::~Response() {}
-
-Response::Response(Request& request, std::vector<ServerConfig>& servers) : _servers(servers) {
-    _status = 200;
-
-    // request.printRequest();
-
-    validateServer(request, servers);
 }
 
 
@@ -126,7 +148,7 @@ int Response::validatePath(Request& request, ServerConfig& server) {
             }
         }   
     }
-    _status = 404;
+    // _status = 404;
     return 1;
 }
 
@@ -146,10 +168,13 @@ std::string Response::makeResponse(Request& request) {
     std::string header = "\r\nContent-Type: text/html\r\nConnection: Close\r\nServer: WebServ\r\n\r\n";
     std::string body = "";
     
-    if (_status == 502) {
+    if (_config->autoindex == "on") {
+        body = generateDirectoryListing("./www" + request.getPath());
+    }
+    else if (_status == 502) {
         body = "<html><body><h1>502 Internal Server Error</h1></body></html>";
     }
-    if (_status == 200 && request.getMethod() == "GET") {
+    else if (_status == 200 && request.getMethod() == "GET") {
         std::string root = (_config->root == "") ? "./www" : _config->root;
         std::string path = root + "/" + _config->index;
         // std::cout << "Path: " << path << std::endl;
@@ -166,21 +191,24 @@ std::string Response::makeResponse(Request& request) {
         // }
         // body = "hello from make response";
         // envia um uma pagina html com um post de um arquivo txt/plain
-        body = "<html><body><h1>200 OK</h1> <form action='#' method='post' enctype='multipart/form-data'> <input type='file' name='file'> <input type='submit' value='Upload'> </form> </body></html>";
+        body += "<html><body><h1>200 OK</h1> <form action='#' method='post' enctype='multipart/form-data'>";
+        body += "<input type='file' name='file'> <input type='submit' value='Upload'> </form> </body></html>";
     }
-    if (_status == 404) {
+    else if (_status == 404) {
         // std::string errorPage = (_config->errorPage.empty()) ? _servers[0].config.errorPage : _config->errorPage;
         // std::ifstream file(errorPage.c_str());
         body = "<html><body><h1>404 Not Found</h1></body></html>";
         // body = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
         // std::cout << "body: " << body << std::endl;
     }
-    if (request.getMethod() == "POST") {
+    else if (request.getMethod() == "POST") {
         // std::cout << "POST" << std::endl;
-        // std::cout << "Body: " << request.getBody() << std::endl;
         saveFileFromRequestBody(request.getBody());
-        // body = readUploadedFile("./www/uploads/output.txt");
-        body = "<meta charset='UTF-8'><html><body><h1>201 OK</h1> <pre>" + body + "</pre> </body></html>";
+        // std::string file = readUploadedFile("./www/uploads/hello.txt");
+        body = "<meta charset='UTF-8'><html><body><h1>201 OK</h1> <pre>";
+        body += "<img src='www/uploads/1665095685245.jpg'>";
+        // body += file;
+        body += "</pre> </body></html>";
         _status = 201;
     }
 
