@@ -10,6 +10,8 @@ Config::Config(const std::string& configFilePath) {
     }
 
     parseConfigFile();
+    heritageServer();
+    printServers(servers, true);
 
     if (servers.empty()) {
         logger.log("Error: no server block found in config file", Logger::ERROR);
@@ -19,6 +21,37 @@ Config::Config(const std::string& configFilePath) {
 
 Config::~Config() {
     _configFile.close();
+}
+
+void Config::heritageServer() {
+    for (size_t i = 0; i < servers.size(); i++) {
+        for (size_t j = 0; j < servers[i].location.size(); j++) {
+            if (servers[i].location[j].config.root == "") {
+                servers[i].location[j].config.root = servers[i].config.root;
+            }
+            if (servers[i].location[j].config.index == "") {
+                servers[i].location[j].config.index = servers[i].config.index;
+            }
+            if (servers[i].location[j].config.errorPage == "") {
+                servers[i].location[j].config.errorPage = servers[i].config.errorPage;
+            }
+            if (servers[i].location[j].config.autoindex == "") {
+                servers[i].location[j].config.autoindex = servers[i].config.autoindex;
+            }
+            if (servers[i].location[j].config.maxBodySize == "") {
+                servers[i].location[j].config.maxBodySize = servers[i].config.maxBodySize;
+            }
+            if (servers[i].location[j].config.cgi == "") {
+                servers[i].location[j].config.cgi = servers[i].config.cgi;
+            }
+            if (servers[i].location[j].config.allowedMethods == "") {
+                servers[i].location[j].config.allowedMethods = servers[i].config.allowedMethods;
+            }
+            if (servers[i].location[j].config.httpRedirection == "") {
+                servers[i].location[j].config.httpRedirection = servers[i].config.httpRedirection;
+            }
+        }
+    }
 }
 
 void Config::setConfigValue(DefaultConfig& config, std::string& line) {
@@ -68,6 +101,7 @@ LocationConfig Config::parseLocation(std::string line) {
 }
 
 ServerConfig Config::parseServer(std::string line) {
+    line = trimLine(line);
     ServerConfig server;
     server.listen = "8080";
     server.server_name = "localhost";
@@ -85,11 +119,11 @@ ServerConfig Config::parseServer(std::string line) {
 void Config::parseConfigFile() {
     std::string line;
     while (std::getline(_configFile, line)) {
+        trimLine(line);
         if (line.find("server ") != std::string::npos) {
             servers.push_back(parseServer(line));
         }
     }
-    printServers(servers, true);
 }
 
 void printConfig(DefaultConfig& config) {

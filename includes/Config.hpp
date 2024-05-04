@@ -34,6 +34,7 @@ private:
     std::ifstream _configFile;
     void setConfigValue(ServerConfig& server, std::string& line);
     void setConfigValue(DefaultConfig& config, std::string& line);
+    void heritageServer();
 
     LocationConfig parseLocation(std::string line);
     ServerConfig parseServer(std::string line);
@@ -49,3 +50,4 @@ public:
 void printServers(std::vector<ServerConfig>& servers, bool shouldPrintLocation);
 void printServer(ServerConfig& server, bool shouldPrintLocation);
 void printLocation(LocationConfig& location);
+void printConfig(DefaultConfig& config);
