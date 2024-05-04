@@ -13,28 +13,44 @@
 #include <dirent.h>
 #include <sys/types.h>
 
+#define DOUBLE_CRLF "\r\n\r\n"
 
 static MimeType mimeType;
 static StatusCode statusCode;
 
 class Response {
 private:
-    std::vector<ServerConfig>   _servers;
-    int                         _status;
-    DefaultConfig*              _config;
+    DefaultConfig*               _config;
+    // ServerConfig*               _server;
+    // LocationConfig*             _location;
     std::string                 _response;
+    int                         _status;
 
 public:
     Response();
     ~Response();
-    // receive the client request and the server config
     Response(Request& request, std::vector<ServerConfig>& servers);
     
+    std::string makeResponse(Request& request);
+
+    // validate
     void validateServer(Request& request, std::vector<ServerConfig>& servers);
     int validatePath(Request& request, ServerConfig& servers);
     void validateLocation(Request& request, LocationConfig& location);
+    DefaultConfig* getConfig(Request& request, ServerConfig& server);
 
-    std::string makeResponse(Request& request);
+    // get
+    std::string generateDirectoryListing(const std::string& path);
+    std::string htmlEncode(const std::string& data);
+    std::string readUploadedFile(const std::string& path);
+
+    // post
+    void saveFileFromRequestBody(const std::string& requestBody);
+
+    // delete
+
+    // setter
+    void setStatus(int status) { _status = status; }
 };
 
 #endif
