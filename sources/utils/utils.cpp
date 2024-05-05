@@ -15,8 +15,21 @@ int stringToNumber(std::string str) {
 }
 
 std::string trimLine(const std::string& line) {
-    std::string trimmedLine = line;
-    trimmedLine.erase(0, trimmedLine.find_first_not_of(" \t"));
-    trimmedLine.erase(trimmedLine.find_last_not_of(" \t") + 1);
-    return trimmedLine;
+    size_t first = line.find_first_not_of(' ');
+    if (std::string::npos == first) {
+        return line;
+    }
+    size_t last = line.find_last_not_of(' ');
+    std::string trimmed = line.substr(first, (last - first + 1));
+
+    // Remover espaços em branco extras no meio da string
+    std::istringstream iss(trimmed);
+    std::string result, word;
+    while (iss >> word) {
+        if (!result.empty()) {
+            result += " ";
+        }
+        result += word;
+    }
+    return result;
 }

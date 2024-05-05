@@ -11,7 +11,7 @@ Config::Config(const std::string& configFilePath) {
 
     parseConfigFile();
     heritageServer();
-    printServers(servers, true);
+    // printServers(servers, true);
 
     if (servers.empty()) {
         logger.log("Error: no server block found in config file", Logger::ERROR);
