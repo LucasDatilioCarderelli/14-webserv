@@ -1,41 +1,29 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>My page</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f2f2f2;
-            margin: 0;
-            padding: 0;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        
-        p {
-            color: #666;
-            line-height: 1.5;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <title>My Webserv</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+    <link rel="icon" href="/static/assets/42_logo_black.svg">
+    <link rel="stylesheet" type="text/css" href="/static/css/particles.css">
 </head>
+
 <body>
-    <div class="container">
-        <h1>WEBSERV</h1>
-        <p>running</p>
+    <div id="particles-container"></div>
+    <div class="main-content">
+        <div class="container">
+            <img src="/static/assets/42-saopaulo.png" alt="42_logo_black" class="logo" style="width: 150px;">
+            <h1>Webserv</h1>
+            <p>Running</p>
+        </div>
     </div>
+    <footer>
+        <p>ldatilio</p>
+    </footer>
+    <script src="/static/js/fadein.js"></script>
+    <script src="/static/js/particles.js"></script>
+    <script> particlesJS.load('particles-container', '/static/js/particles.json', function () {}); </script>
 </body>
-<footer>
-    <p>ldatilio</p>
-</footer>
+
 </html>

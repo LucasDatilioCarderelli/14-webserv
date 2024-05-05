@@ -1,10 +1,28 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+    <meta charset="UTF-8">
     <title>404</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+    <link rel="icon" href="/static/assets/42_logo_black.svg">
+    <script src="/static/js/fadein.js"></script>
+    <script src="/static/js/particles.js"></script>
+    <script>
+        particlesJS.load('particles-container', '/static/js/particles.json', function () {
+            console.log('callback - particles.js config loaded');
+        });
+    </script>
+    <link rel="stylesheet" type="text/css" href="/static/css/particles.css">
 </head>
+
 <body>
-    <h1>404 - Not Found</h1>
-    <p>Desculpe, a página que você está procurando não foi encontrada.</p>
+    <div id="particles-container"></div>
+    <div class="container">
+        <img src="/static/assets/42-saopaulo.png" alt="42_logo_black" class="logo" style="width: 150px;">
+        <h1 class="error">404 - Not Found</h1>
+        <p>Desculpe cadete, a página que você está procurando não foi encontrada.</p>
+    </div>
 </body>
+
 </html>
