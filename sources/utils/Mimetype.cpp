@@ -17,6 +17,7 @@ MimeType::MimeType() {
     _mimeTypes[".gif"]  = "image/gif";
     _mimeTypes[".ico"]  = "image/vnd.microsoft.icon";
     _mimeTypes[".jpg"]  = "image/jpeg";
+    _mimeTypes[".png"]  = "image/png";
     _mimeTypes[".svg"]  = "image/svg+xml";
     _mimeTypes[".aac"]  = "audio/aac";
     _mimeTypes[".mp3"]  = "audio/mpeg";

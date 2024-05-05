@@ -12,7 +12,6 @@ Response::~Response() {}
 Response::Response(Request& request, std::vector<ServerConfig>& servers) {
     _status = 200;
     // getConfig(request, servers);
-
     validateServer(request, servers);
 }
 
@@ -62,16 +61,63 @@ void Response::validateServer(Request& request, std::vector<ServerConfig>& serve
         return;
     }
 
-    // request.printRequest();
     if (stringToNumber(request.getContentLength()) > stringToNumber(_config->maxBodySize)) {
         _status = 413; // Payload Too Large
         return;
     }
 }
 
+#include <sys/stat.h>
+bool isDirectory(const std::string& path) {
+    struct stat buffer;
+    if (stat(path.c_str(), &buffer) != 0) {
+        // handle error, for example, file or directory does not exist
+        return false;
+    }
+    return S_ISDIR(buffer.st_mode);
+}
+
+// bool isFile(const std::string& path) {
+//     struct stat buffer;
+//     if (stat(path.c_str(), &buffer) != 0) {
+//         // handle error, for example, file or directory does not exist
+//         return false;
+//     }
+//     return S_ISREG(buffer.st_mode);
+// }
+
+std::string Response::openFile(const std::string& path) {
+    std::ifstream file;
+    file.open(path.c_str());
+    std::cout << "Path: " << path << std::endl;
+    if (!file.good()) {
+        _status = 404;
+        file.open("./www/statusCode/404.html");
+    } 
+    std::string extension = path.substr(path.find_last_of("."));
+    _responseContentType = mimeType.get(extension);
+    std::cout << "MimeType: " << _responseContentType << std::endl;
+
+    return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+}
+
+std::string Response::getPath(Request& request) {
+    std::string fullPath = _config->root + request.getPath();
+    if (isDirectory(fullPath)) {
+        if (fullPath[fullPath.size() - 1] != '/') {
+            fullPath += "/";
+        }
+        fullPath += _config->index;
+    }
+    return fullPath;
+}
+
 std::string Response::makeResponse(Request& request) {
-    std::string header = "\r\nContent-Type: text/html\r\nConnection: Close\r\nServer: WebServ\r\n\r\n";
-    std::string body = "<html><body><h1>200 OK</h1> <p> Hello world </p> </body></html>";
+    std::string path = getPath(request);
+    std::string body = openFile(path);
+    std::string contentType = "\r\nContent-Type: " + _responseContentType;
+    std::string header = contentType + "\r\nConnection: Close\r\nServer: WebServ\r\n\r\n";
+    // std::string body = "<html><body><h1>200 OK</h1> <p> Hello world </p> </body></html>";
 
     std::string response = "HTTP/1.1 " + numberToString(_status) + " " + statusCode.get(_status) + header + body + "\n";
     std::string logMessage = request.makelog() + " " + numberToString(_status) + " " + statusCode.get(_status);

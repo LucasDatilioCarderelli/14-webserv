@@ -1,0 +1,60 @@
+:root {
+    --main-bg-color: #131516;
+    --container-bg-color: #2c2b2b;
+    --main-text-color: #666;
+    --title-color: #35b8e0;
+    --error-color: red; /* Cor do título do erro */
+    --footer-color: #666; /* Cor do rodapé */
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--main-bg-color);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    justify-content: center;
+    align-items: center;
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.container {
+    text-align: center;
+    padding: 20px;
+    background-color: var(--container-bg-color);
+    border-radius: 8px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: var(--title-color);
+    font-size: 48px;
+    font-family: 'Arial', sans-serif;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    margin-bottom: 20px;
+}
+
+h1.error {
+    color: var(--error-color); /* Cor do título do erro */
+}
+
+p {
+    color: var(--main-text-color);
+    line-height: 1.6;
+}
+
+footer {
+    color: var(--footer-color); /* Cor do rodapé */
+    margin-top: auto;
+    text-align: center;
+    padding: 10px;
+}

@@ -20,11 +20,13 @@ static StatusCode statusCode;
 
 class Response {
 private:
-    DefaultConfig*               _config;
+    // Request*                    _request;
+    DefaultConfig*              _config;
     // ServerConfig*               _server;
     // LocationConfig*             _location;
     std::string                 _response;
     int                         _status;
+    std::string                 _responseContentType;
 
 public:
     Response();
@@ -43,6 +45,10 @@ public:
     std::string generateDirectoryListing(const std::string& path);
     std::string htmlEncode(const std::string& data);
     std::string readUploadedFile(const std::string& path);
+
+    // std::string getFileOrDirectory();
+    std::string openFile(const std::string& path);
+    std::string getPath(Request& request);
 
     // post
     void saveFileFromRequestBody(const std::string& requestBody);
