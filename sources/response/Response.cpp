@@ -86,17 +86,28 @@ bool isDirectory(const std::string& path) {
 //     return S_ISREG(buffer.st_mode);
 // }
 
+
+std::string convertPercentTwenty(const std::string& input) {
+    std::string output = input;
+    size_t pos = output.find("%20");
+    while (pos != std::string::npos) {
+        output.replace(pos, 3, " ");
+        pos = output.find("%20", pos + 1);
+    }
+    return output;
+}
+
 std::string Response::openFile(const std::string& path) {
     std::ifstream file;
-    file.open(path.c_str());
-    std::cout << "Path: " << path << std::endl;
+    std::string convertedPath = convertPercentTwenty(path);
+    file.open(convertedPath.c_str());
+    std::cout << "Path: " << convertedPath << std::endl;
     if (!file.good()) {
         _status = 404;
         file.open("./www/statusCode/404.html");
     } 
-    std::string extension = path.substr(path.find_last_of("."));
+    std::string extension = convertedPath.substr(convertedPath.find_last_of("."));
     _responseContentType = mimeType.get(extension);
-    std::cout << "MimeType: " << _responseContentType << std::endl;
 
     return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 }
@@ -107,17 +118,57 @@ std::string Response::getPath(Request& request) {
         if (fullPath[fullPath.size() - 1] != '/') {
             fullPath += "/";
         }
-        fullPath += _config->index;
     }
     return fullPath;
 }
 
+std::string Response::generateDirectoryListing(const std::string& path) {
+    std::string body = "<!DOCTYPE html>";
+    body += "<html><body><h1>Index of " + path + "</h1><ul>";
+    DIR *dir;
+    struct dirent *ent;
+    if ((dir = opendir(path.c_str())) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
+            body += "<li><a href='/uploads/" + std::string(ent->d_name) + "'>" + std::string(ent->d_name) + "</a></li>";
+        }
+        closedir(dir);
+    } else {
+        body = openFile("./www/statusCode/404.html");
+    }
+    body += "</ul></body></html>";
+    return body;
+}
+
+
+
 std::string Response::makeResponse(Request& request) {
     std::string path = getPath(request);
-    std::string body = openFile(path);
+    std::cout << "Path2 " << path << std::endl;
+    std::string body;
+    if (_config->autoindex == "on") {
+        body = generateDirectoryListing(path);
+    } 
+    // else if (_config->httpRedirection != "") {
+    //     _status = 301;
+    //     body = makeRedirection(_config->httpRedirection);
+    // } 
+    // else if (_config->cgi != "") {
+    //     body = executeCGI(request);
+    // } 
+    // else if (request.getMethod() == "POST") {
+    //     saveFileFromRequestBody(request.getBody());
+    //     body = "<html><body><h1>201 OK</h1> <pre>";
+    //     body += "<img src='www/uploads/1665095685245.jpg'>";
+    //     body += "</pre> </body></html>";
+    //     _status = 201;
+    // } 
+    else {
+        path = (path[path.size() - 1] == '/') ? path + "index.html" : path;
+        std::cout << "Path3 " << path << std::endl;
+        body = openFile(path);
+    }
     std::string contentType = "\r\nContent-Type: " + _responseContentType;
     std::string header = contentType + "\r\nConnection: Close\r\nServer: WebServ\r\n\r\n";
-    // std::string body = "<html><body><h1>200 OK</h1> <p> Hello world </p> </body></html>";
 
     std::string response = "HTTP/1.1 " + numberToString(_status) + " " + statusCode.get(_status) + header + body + "\n";
     std::string logMessage = request.makelog() + " " + numberToString(_status) + " " + statusCode.get(_status);
