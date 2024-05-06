@@ -43,6 +43,7 @@ public:
 
     // get
     std::string generateDirectoryListing(const std::string& path);
+    std::string makeRedirection(const std::string& path);
     std::string htmlEncode(const std::string& data);
     std::string readUploadedFile(const std::string& path);
 

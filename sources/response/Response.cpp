@@ -139,7 +139,15 @@ std::string Response::generateDirectoryListing(const std::string& path) {
     return body;
 }
 
-
+std::string Response::makeRedirection(const std::string& path) {
+    std::string body = "<!DOCTYPE html>";
+    body += "<html><body><h1>301 Moved Permanently</h1>";
+    body += "<script>window.location.replace('" + path + "');</script>";
+    body += "</head><body><h1>Moved Permanently</h1><p>The document has moved <a href=\"";
+    body += path + "\">here</a>.</p></body></html>";
+    _responseContentType = mimeType.get(".html");
+    return body; 
+}
 
 std::string Response::makeResponse(Request& request) {
     std::string path = getPath(request);
@@ -148,10 +156,10 @@ std::string Response::makeResponse(Request& request) {
     if (_config->autoindex == "on") {
         body = generateDirectoryListing(path);
     } 
-    // else if (_config->httpRedirection != "") {
-    //     _status = 301;
-    //     body = makeRedirection(_config->httpRedirection);
-    // } 
+    else if (_config->httpRedirection != "") {
+        _status = 301;
+        body = makeRedirection(_config->httpRedirection);
+    } 
     // else if (_config->cgi != "") {
     //     body = executeCGI(request);
     // } 
