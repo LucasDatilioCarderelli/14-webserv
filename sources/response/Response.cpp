@@ -11,7 +11,6 @@ Response::Response() {}
 Response::~Response() {}
 Response::Response(Request& request, std::vector<ServerConfig>& servers) {
     _status = 200;
-    // getConfig(request, servers);
     validateServer(request, servers);
 }
 
@@ -26,16 +25,6 @@ DefaultConfig* Response::getConfig(Request& request, ServerConfig& server) {
 }
 
 void Response::validateServer(Request& request, std::vector<ServerConfig>& servers) {
-    if (request.getVersion() != "HTTP/1.1") {
-        setStatus(505); // HTTP Version Not Supported
-        return;
-    }
-
-    if (request.getMethod() != "GET" && request.getMethod() != "POST" && request.getMethod() != "DELETE") {
-        setStatus(501); // Not Implemented
-        return;
-    }
-
     // get the server config
     ServerConfig* server = NULL;
     for (size_t i = 0; i < servers.size(); i++) {
@@ -43,247 +32,69 @@ void Response::validateServer(Request& request, std::vector<ServerConfig>& serve
             server = &servers[i];
         }
     }
-    // printServer(*server, false);
+    _config = getConfig(request, *server);
 
-    // validate the server
+    // validate the request
     if (server->server_name != request.getHost()) {
         setStatus(502); // Bad Gateway
-        return;
     }
-
-    // validate the path
-    _config = getConfig(request, *server);
-    // printConfig(*_config);
-
-    // validate the method
-    if (_config->allowedMethods.find(request.getMethod()) == std::string::npos) {
-        _status = 405; // Method Not Allowed
-        return;
+    else if (request.getVersion() != "HTTP/1.1") {
+        setStatus(505); // HTTP Version Not Supported
     }
-
-    if (stringToNumber(request.getContentLength()) > stringToNumber(_config->maxBodySize)) {
-        _status = 413; // Payload Too Large
-        return;
+    else if (request.getMethod() != "GET" && request.getMethod() != "POST" && 
+             request.getMethod() != "DELETE") {
+        setStatus(501); // Not Implemented
     }
-}
-
-#include <sys/stat.h>
-bool isDirectory(const std::string& path) {
-    struct stat buffer;
-    if (stat(path.c_str(), &buffer) != 0) {
-        // handle error, for example, file or directory does not exist
-        return false;
+    else if (_config->allowedMethods.find(request.getMethod()) == std::string::npos &&
+             _config->allowedMethods != "") {
+        setStatus(405); // Method Not Allowed
     }
-    return S_ISDIR(buffer.st_mode);
-}
-
-// bool isFile(const std::string& path) {
-//     struct stat buffer;
-//     if (stat(path.c_str(), &buffer) != 0) {
-//         // handle error, for example, file or directory does not exist
-//         return false;
-//     }
-//     return S_ISREG(buffer.st_mode);
-// }
-
-
-std::string convertPercentTwenty(const std::string& input) {
-    std::string output = input;
-    size_t pos = output.find("%20");
-    while (pos != std::string::npos) {
-        output.replace(pos, 3, " ");
-        pos = output.find("%20", pos + 1);
+    else if (stringToNumber(request.getContentLength()) > stringToNumber(_config->maxBodySize)) {
+        setStatus(413); // Payload Too Large
     }
-    return output;
-}
-
-std::string Response::openFile(const std::string& path) {
-    std::ifstream file;
-    std::string convertedPath = convertPercentTwenty(path);
-    file.open(convertedPath.c_str());
-    std::cout << "Path: " << convertedPath << std::endl;
-    if (!file.good()) {
-        _status = 404;
-        file.open("./www/statusCode/404.html");
-    } 
-    std::string extension = convertedPath.substr(convertedPath.find_last_of("."));
-    _responseContentType = mimeType.get(extension);
-
-    return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-}
-
-std::string Response::getPath(Request& request) {
-    std::string fullPath = _config->root + request.getPath();
-    if (isDirectory(fullPath)) {
-        if (fullPath[fullPath.size() - 1] != '/') {
-            fullPath += "/";
-        }
-    }
-    return fullPath;
-}
-
-std::string Response::generateDirectoryListing(const std::string& path) {
-    std::string body = "<!DOCTYPE html>";
-    body += "<html><body><h1>Index of " + path + "</h1><ul>";
-    DIR *dir;
-    struct dirent *ent;
-    if ((dir = opendir(path.c_str())) != NULL) {
-        while ((ent = readdir(dir)) != NULL) {
-            body += "<li><a href='/uploads/" + std::string(ent->d_name) + "'>" + std::string(ent->d_name) + "</a></li>";
-        }
-        closedir(dir);
-    } else {
-        body = openFile("./www/statusCode/404.html");
-    }
-    body += "</ul></body></html>";
-    return body;
-}
-
-std::string Response::makeRedirection(const std::string& path) {
-    std::string body = "<!DOCTYPE html>";
-    body += "<html><body><h1>301 Moved Permanently</h1>";
-    body += "<script>window.location.replace('" + path + "');</script>";
-    body += "</head><body><h1>Moved Permanently</h1><p>The document has moved <a href=\"";
-    body += path + "\">here</a>.</p></body></html>";
-    _responseContentType = mimeType.get(".html");
-    return body; 
 }
 
 std::string Response::makeResponse(Request& request) {
-    std::string path = getPath(request);
-    std::cout << "Path2 " << path << std::endl;
     std::string body;
-    if (_config->autoindex == "on") {
+    std::string path = getPath(request);
+
+    if (_status != 200) {
+        std::cout << "Status: " << _status << std::endl;
+        body = openFile("./www/statusCode/" + numberToString(_status) + ".html");
+    }
+    else if (_config->autoindex == "on" && request.getMethod() == "GET") {
         body = generateDirectoryListing(path);
     } 
     else if (_config->httpRedirection != "") {
-        _status = 301;
         body = makeRedirection(_config->httpRedirection);
     } 
-    // else if (_config->cgi != "") {
-    //     body = executeCGI(request);
-    // } 
-    // else if (request.getMethod() == "POST") {
-    //     saveFileFromRequestBody(request.getBody());
-    //     body = "<html><body><h1>201 OK</h1> <pre>";
-    //     body += "<img src='www/uploads/1665095685245.jpg'>";
-    //     body += "</pre> </body></html>";
-    //     _status = 201;
-    // } 
-    else {
-        path = (path[path.size() - 1] == '/') ? path + "index.html" : path;
-        std::cout << "Path3 " << path << std::endl;
+    else if (_config->cgi != "") {
+        // body = executeCGI(request);
+    } 
+    else if (request.getMethod() == "GET") {
+        path = (path[path.size() - 1] == '/') ? path + _config->index : path;
         body = openFile(path);
     }
+    else if (request.getMethod() == "POST") {
+        saveFileFromRequestBody(request.getBody());
+    }
+    else if (request.getMethod() == "DELETE") {
+        deleteFile(path);
+    }
+    else {
+        setStatus(500);
+        body = openFile("./www/statusCode/" + numberToString(_status) + ".html");
+    }
+
     std::string contentType = "\r\nContent-Type: " + _responseContentType;
     std::string header = contentType + "\r\nConnection: Close\r\nServer: WebServ\r\n\r\n";
 
     std::string response = "HTTP/1.1 " + numberToString(_status) + " " + statusCode.get(_status) + header + body + "\n";
     std::string logMessage = request.makelog() + " " + numberToString(_status) + " " + statusCode.get(_status);
-    logger.log(logMessage, Logger::INFO);
+    if (_status >= 400) {
+        logger.log(logMessage, Logger::ERROR);
+    } else {
+        logger.log(logMessage, Logger::INFO);
+    }
     return response; 
 }
-
-
-
-    // for (size_t i = 0; i < servers.size(); i++) {
-    //     if (servers[i].config.listen == request.getPort() && servers[i].config.server_name == request.getHost()) {
-    //         validatePath(request, servers[i]);
-    //         return;
-    //     }
-    // }
-
-
-// int Response::validatePath(Request& request, ServerConfig& server) {
-//     // validate the path
-//     if (request.getPath() == "/") {
-//         // std::cout << "PORT          : " << server.config.listen << std::endl;
-//         // std::cout << "SERVER_NAME   : " << server.config.server_name << std::endl;
-//         // std::cout << "ROOT          : " << server.config.root << std::endl;
-//         // std::cout << "INDEX         : " << server.config.index << std::endl;
-//         // std::cout << "ERROR_PAGE    : " << server.config.errorPage << std::endl;
-//         // std::cout << "AUTOINDEX     : " << server.config.autoindex << std::endl;
-//         // std::cout << "MAX_BODY_SIZE : " << server.config.maxBodySize << std::endl;
-//         // std::cout << "CGI           : " << server.config.cgi << std::endl;
-//         // std::cout << "METHODS       : " << server.config.allowedMethods << std::endl;
-//         // std::cout << "REDIRECTION   : " << server.config.httpRedirection << std::endl;
-//         _config = &server.config;
-//         return 0;
-//     }
-//     else {
-//         for (int i = 0; i < (int)server.location.size(); i++) {
-//             if (request.getPath() == server.location[i].location) {
-//                 validateLocation(request, server.location[i]);
-//                 return 0;
-//             }
-//         }   
-//     }
-//     // _status = 404;
-//     return 1;
-// }
-
-
-// void Response::validateLocation(Request& request, LocationConfig& location) {
-//     // validate the method
-//     if (location.config.allowedMethods.find(request.getMethod()) == std::string::npos) {
-//         _status = 405;
-//         return;
-//     }
-//     _config = &location.config;
-//     // printLocation(location);
-// }
-
-
-// std::string Response::makeResponse(Request& request) {
-//     std::string header = "\r\nContent-Type: text/html\r\nConnection: Close\r\nServer: WebServ\r\n\r\n";
-//     std::string body = "";
-    
-//     if (_config->autoindex == "on") {
-//         body = generateDirectoryListing("./www" + request.getPath());
-//     }
-//     else if (_status == 502) {
-//         body = "<html><body><h1>502 Internal Server Error</h1></body></html>";
-//     }
-//     else if (_status == 200 && request.getMethod() == "GET") {
-//         std::string root = (_config->root == "") ? "./www" : _config->root;
-//         std::string path = root + "/" + _config->index;
-//         // std::cout << "Path: " << path << std::endl;
-//         // abre o arquivo de index
-//         // std::ifstream indexFile(path.c_str());
-//         // if (indexFile.good()) {
-//         //     // salva o conteudo do arquivo no body
-//         //     body = std::string((std::istreambuf_iterator<char>(indexFile)), std::istreambuf_iterator<char>());
-//         //     // body = "<html><body><h1>200 OK</h1> <form action='/uploads' method='post' enctype='multipart/form-data'> <input type='file' name='file'> <input type='submit' value='Upload'> </form> </body></html>";
-//         //     indexFile.close();
-//         // } else {
-//         //     _status = 404;
-//         //     indexFile.close();
-//         // }
-//         // body = "hello from make response";
-//         // envia um uma pagina html com um post de um arquivo txt/plain
-//         body += "<html><body><h1>200 OK</h1> <form action='#' method='post' enctype='multipart/form-data'>";
-//         body += "<input type='file' name='file'> <input type='submit' value='Upload'> </form> </body></html>";
-//     }
-//     else if (_status == 404) {
-//         // std::string errorPage = (_config->errorPage.empty()) ? _servers[0].config.errorPage : _config->errorPage;
-//         // std::ifstream file(errorPage.c_str());
-//         body = "<html><body><h1>404 Not Found</h1></body></html>";
-//         // body = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-//         // std::cout << "body: " << body << std::endl;
-//     }
-//     else if (request.getMethod() == "POST") {
-//         // std::cout << "POST" << std::endl;
-//         saveFileFromRequestBody(request.getBody());
-//         // std::string file = readUploadedFile("./www/uploads/hello.txt");
-//         body = "<meta charset='UTF-8'><html><body><h1>201 OK</h1> <pre>";
-//         body += "<img src='www/uploads/1665095685245.jpg'>";
-//         // body += file;
-//         body += "</pre> </body></html>";
-//         _status = 201;
-//     }
-
-//     std::string response = "HTTP/1.1 " + numberToString(_status) + " " + statusCode.get(_status) + header + body + "\n";
-//     std::string logMessage = request.makelog() + " " + numberToString(_status) + " " + statusCode.get(_status);
-//     logger.log(logMessage, Logger::INFO);
-//     return response;
-// }

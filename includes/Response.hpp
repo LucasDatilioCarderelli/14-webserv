@@ -11,7 +11,7 @@
 #include <sstream>
 #include <string>
 #include <dirent.h>
-#include <sys/types.h>
+#include <sys/stat.h>
 
 #define DOUBLE_CRLF "\r\n\r\n"
 
@@ -20,10 +20,7 @@ static StatusCode statusCode;
 
 class Response {
 private:
-    // Request*                    _request;
     DefaultConfig*              _config;
-    // ServerConfig*               _server;
-    // LocationConfig*             _location;
     std::string                 _response;
     int                         _status;
     std::string                 _responseContentType;
@@ -37,24 +34,26 @@ public:
 
     // validate
     void validateServer(Request& request, std::vector<ServerConfig>& servers);
-    int validatePath(Request& request, ServerConfig& servers);
-    void validateLocation(Request& request, LocationConfig& location);
     DefaultConfig* getConfig(Request& request, ServerConfig& server);
 
-    // get
+    // directives
     std::string generateDirectoryListing(const std::string& path);
     std::string makeRedirection(const std::string& path);
-    std::string htmlEncode(const std::string& data);
-    std::string readUploadedFile(const std::string& path);
 
-    // std::string getFileOrDirectory();
+    // GET
     std::string openFile(const std::string& path);
-    std::string getPath(Request& request);
 
-    // post
+    // POST
     void saveFileFromRequestBody(const std::string& requestBody);
 
-    // delete
+    // DELETE
+    void deleteFile(const std::string& path);
+
+    // Utils
+    std::string convertPercentTwenty(const std::string& input);
+    bool isDirectory(const std::string& path);
+    bool isFile(const std::string& path);
+    std::string getPath(Request& request);
 
     // setter
     void setStatus(int status) { _status = status; }
