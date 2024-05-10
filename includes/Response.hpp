@@ -41,7 +41,9 @@ public:
     std::string makeRedirection(const std::string& path);
 
     // GET
+    std::string getPath(Request& request);
     std::string openFile(const std::string& path);
+    std::string getErrorPage();
 
     // POST
     void saveFileFromRequestBody(const std::string& requestBody);
@@ -53,7 +55,7 @@ public:
     std::string convertPercentTwenty(const std::string& input);
     bool isDirectory(const std::string& path);
     bool isFile(const std::string& path);
-    std::string getPath(Request& request);
+    std::vector<std::string> split(const std::string& s, char delimiter);
 
     // setter
     void setStatus(int status) { _status = status; }

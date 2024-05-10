@@ -1,15 +1,32 @@
 #include "Response.hpp"
 
 // GET
+std::string Response::getPath(Request& request) {
+    std::string fullPath = _config->root + request.getPath();
+    if (isDirectory(fullPath)) {
+        if (fullPath[fullPath.size() - 1] != '/') {
+            fullPath += "/";
+        }
+    }
+    return fullPath;
+}
+
 std::string Response::openFile(const std::string& path) {
     std::ifstream file;
     std::string extension;
     std::string convertedPath = convertPercentTwenty(path);
+    std::cout << "convertedPath: " << convertedPath << std::endl;
     file.open(convertedPath.c_str());
     if (!file.good()) {
-        logger.log("Error: could not open file", Logger::ERROR);
-        std::string error_page = (_config->errorPage == "") ? "./www/statusCode/404.html" : _config->errorPage;
+        setStatus(404);
+        std::string error_page = getErrorPage();
+        std::cout << "error_page: " << error_page << std::endl;
         file.open(error_page.c_str());
+        if (!file.good()) {
+            setStatus(500);
+            error_page = "./www/statusCode/" + numberToString(_status) + ".html";
+            file.open(error_page.c_str());
+        }
         extension = error_page.substr(error_page.find_last_of("."));
     } else {
         extension = convertedPath.substr(convertedPath.find_last_of("."));
@@ -18,6 +35,19 @@ std::string Response::openFile(const std::string& path) {
     std::string body = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>()); 
     file.close();
     return body;
+}
+
+std::string Response::getErrorPage() {
+    std::string error_page;
+    if (_config->errorPage != "") {
+        std::vector<std::string> error_page_splited = split(_config->errorPage, ' ');
+        if (error_page_splited[0] == numberToString(_status) && error_page_splited.size() == 2) {
+            error_page = error_page_splited[1];
+            return error_page;
+        }
+    }
+    error_page = "./www/statusCode/" + numberToString(_status) + ".html";
+    return error_page;
 }
 
 // POST

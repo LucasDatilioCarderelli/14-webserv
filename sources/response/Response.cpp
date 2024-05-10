@@ -1,10 +1,5 @@
 #include "Response.hpp"
-
-
-#include <dirent.h>
-#include <sys/types.h>
-#include <string>
-#include <sstream>
+#include "Cgi.hpp"
 
 
 Response::Response() {}
@@ -59,8 +54,8 @@ std::string Response::makeResponse(Request& request) {
     std::string path = getPath(request);
 
     if (_status != 200) {
-        std::cout << "Status: " << _status << std::endl;
-        body = openFile("./www/statusCode/" + numberToString(_status) + ".html");
+        std::string error_page = getErrorPage();
+        body = openFile(error_page);
     }
     else if (_config->autoindex == "on" && request.getMethod() == "GET") {
         body = generateDirectoryListing(path);
@@ -69,7 +64,8 @@ std::string Response::makeResponse(Request& request) {
         body = makeRedirection(_config->httpRedirection);
     } 
     else if (_config->cgi != "") {
-        // body = executeCGI(request);
+        // Cgi cgi(_config->cgi, request);
+        // body = executeCGI();
     } 
     else if (request.getMethod() == "GET") {
         path = (path[path.size() - 1] == '/') ? path + _config->index : path;

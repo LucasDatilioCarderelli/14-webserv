@@ -27,14 +27,14 @@ bool Response::isDirectory(const std::string& path) {
     return S_ISDIR(buffer.st_mode);
 }
 
-std::string Response::getPath(Request& request) {
-    std::string fullPath = _config->root + request.getPath();
-    if (isDirectory(fullPath)) {
-        if (fullPath[fullPath.size() - 1] != '/') {
-            fullPath += "/";
-        }
+std::vector<std::string> Response::split(const std::string &s, char delimiter) {
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(s);
+    while (std::getline(tokenStream, token, delimiter)) {
+        tokens.push_back(token);
     }
-    return fullPath;
+    return tokens;
 }
 
 // std::string Response::htmlEncode(const std::string& data) {
