@@ -120,7 +120,7 @@ void Server::handleClientRequest(int connection_socket) {
 
     Request request;
     request.parseRequest(buffer.c_str());
-    if (request.getMethod() == "POST" && request.getContentType() == "multipart/form-data") {
+    if (request.getMethod() == "POST") {
         receiveBody(connection_socket, request);
     }
 
@@ -157,7 +157,7 @@ void Server::receiveBody(int connection_socket, Request& request) {
     while ((bytes_received = recv(connection_socket, recv_buffer, bufferSize, 0)) > 0) {
         total_bytes_received += bytes_received;
         body.append(recv_buffer, bytes_received);
-        if (body.find(boundary_end) != std::string::npos) {
+        if (body.find(boundary_end) != std::string::npos || (int)total_bytes_received >= stringToNumber(request.getContentLength())) {
             break;
         }
     }

@@ -1,0 +1,114 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+
+html{
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	background-color: black;
+}
+
+body {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.title{
+	text-align: center;
+	font-size: 64px;
+	padding-top: 25px;
+	padding-bottom: 25px;
+	font-family: 'Courier New', Courier, monospace;
+	color: whitesmoke;
+}
+
+main {
+	flex: 1 0 auto;
+}
+#board-container {
+	padding-top: 25px;
+	padding-bottom: 25px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+#board {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	grid-gap: 5px;
+	padding: 5px;
+	box-sizing: border-box;
+}
+
+.square {
+	border: 2px solid grey;
+	margin-bottom: auto;
+	min-width: 60px;
+	min-height: 60px;
+	font-size: 50px;
+	font-weight: bold;
+	font-family:'Courier New', Courier, monospace;
+	text-align: center;
+	align-items: center;
+	justify-content: center;
+	color: whitesmoke;
+}
+
+.txt {
+	font-size: 30px;
+	margin: auto 0;
+	padding-left: 10px;
+	font-family:'Courier New', Courier, monospace;
+	font-weight: bold;
+	color: whitesmoke;
+}
+
+#rules {
+	color: whitesmoke;
+	margin: 0 auto;
+	width: 100%;
+	background-color: rgba(100, 95, 95, 0.274);
+	text-align: center;
+	padding-top: 25px;
+	padding-bottom: 25px;
+}
+
+.history_txt {
+	font-size: 30px;
+	margin: auto 0;
+	padding-left: 10px;
+	font-family:'Courier New', Courier, monospace;
+	font-weight: bold;
+	color: whitesmoke;
+	text-align: center;
+}
+
+.remover_bolinha {
+	list-style-type: none;
+}
+
+ul {
+	display: inline-block;
+	margin: 0 auto;
+	padding: 0;
+	text-align: left;
+}
+
+li {
+	font-family:'Courier New', Courier, monospace;
+	font-size: 20px;
+	padding: 5px;
+}
+
+footer {
+	width: 100%;
+	margin-top: auto;
+	flex-shrink: 0;
+	padding: 15px;
+	text-align: center;
+	background: rgba(255, 255, 255, 0.425);
+}

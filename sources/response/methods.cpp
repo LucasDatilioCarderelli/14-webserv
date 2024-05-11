@@ -15,12 +15,10 @@ std::string Response::openFile(const std::string& path) {
     std::ifstream file;
     std::string extension;
     std::string convertedPath = convertPercentTwenty(path);
-    std::cout << "convertedPath: " << convertedPath << std::endl;
     file.open(convertedPath.c_str());
     if (!file.good()) {
         setStatus(404);
         std::string error_page = getErrorPage();
-        std::cout << "error_page: " << error_page << std::endl;
         file.open(error_page.c_str());
         if (!file.good()) {
             setStatus(500);

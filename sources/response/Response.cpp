@@ -52,9 +52,10 @@ void Response::validateServer(Request& request, std::vector<ServerConfig>& serve
 std::string Response::makeResponse(Request& request) {
     std::string body;
     std::string path = getPath(request);
+    std::string error_page;
 
     if (_status != 200) {
-        std::string error_page = getErrorPage();
+        error_page = getErrorPage();
         body = openFile(error_page);
     }
     else if (_config->autoindex == "on" && request.getMethod() == "GET") {
@@ -64,14 +65,19 @@ std::string Response::makeResponse(Request& request) {
         body = makeRedirection(_config->httpRedirection);
     } 
     else if (_config->cgi != "") {
-        // Cgi cgi(_config->cgi, request);
-        // body = executeCGI();
+        Cgi cgi(_config->cgi, request);
+        body = cgi.executeCgi();
+        if (body.empty()) {
+            setStatus(500);
+            error_page = getErrorPage();
+            body = openFile(error_page);
+        }
     } 
     else if (request.getMethod() == "GET") {
         path = (path[path.size() - 1] == '/') ? path + _config->index : path;
         body = openFile(path);
     }
-    else if (request.getMethod() == "POST") {
+    else if (request.getMethod() == "POST" && request.getContentType() == "multipart/form-data") {
         saveFileFromRequestBody(request.getBody());
     }
     else if (request.getMethod() == "DELETE") {
