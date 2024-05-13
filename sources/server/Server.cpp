@@ -127,7 +127,10 @@ void Server::handleClientRequest(int connection_socket) {
     Response responseClient(request, _servers);
     std::string response = responseClient.makeResponse(request);
 
-    send(connection_socket, response.c_str(), response.size(), 0);
+    int bytes_sent = send(connection_socket, response.c_str(), response.size(), 0);
+    if (bytes_sent <= 0) {
+        logger.log("send failed", Logger::ERROR);
+    }
 
     shutdown(connection_socket, SHUT_WR);
     close(connection_socket);

@@ -63,6 +63,7 @@ std::string Cgi::executeCgi() {
 
         char* argv[] = {NULL};
 
+        alarm(5);
         if (execve(_cgi_path.c_str(), argv, envArray.data()) == -1) {
             return "";
         }

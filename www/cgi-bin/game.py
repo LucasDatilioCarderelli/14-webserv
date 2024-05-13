@@ -54,8 +54,12 @@ if __name__ == "__main__":
     import json
 
     body = os.getenv("REQUEST_BODY")
-    equation = json.loads(body)["equation"]
+    method = os.getenv("REQUEST_METHOD")
     correct_equation = "8*9-30"
-    result = json.dumps({"result": play(correct_equation, equation)})
 
-    print(result)
+    if (method == "GET"):
+        print(json.dumps({"equation": correct_equation}))
+    elif (method == "POST"):
+        equation = json.loads(body)["equation"]
+        result = json.dumps({"result": play(correct_equation, equation)})
+        print(result)
