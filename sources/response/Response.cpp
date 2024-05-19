@@ -59,7 +59,7 @@ std::string Response::makeResponse(Request& request) {
         body = openFile(error_page);
     }
     else if (_config->autoindex == "on" && request.getMethod() == "GET") {
-        body = generateDirectoryListing(path);
+        body = generateDirectoryListing(path, request.getPath());
     } 
     else if (_config->httpRedirection != "") {
         body = makeRedirection(_config->httpRedirection);
@@ -78,8 +78,16 @@ std::string Response::makeResponse(Request& request) {
         path = (path[path.size() - 1] == '/') ? path + _config->index : path;
         body = openFile(path);
     }
-    else if (request.getMethod() == "POST" && request.getContentType() == "multipart/form-data") {
-        saveFileFromRequestBody(request.getBody());
+    else if (request.getMethod() == "POST") {
+        if (request.getContentType() == "multipart/form-data") {
+            try {
+                saveFileFromRequestBody(request.getBody(), path);
+            } catch (const std::exception& e) {
+                setStatus(400);
+            }
+        } else {
+            setStatus(415);
+        }
     }
     else if (request.getMethod() == "DELETE") {
         deleteFile(path);

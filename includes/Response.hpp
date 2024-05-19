@@ -37,7 +37,7 @@ public:
     DefaultConfig* getConfig(Request& request, ServerConfig& server);
 
     // directives
-    std::string generateDirectoryListing(const std::string& path);
+    std::string generateDirectoryListing(const std::string& path, const std::string& uri);
     std::string makeRedirection(const std::string& path);
 
     // GET
@@ -46,7 +46,7 @@ public:
     std::string getErrorPage();
 
     // POST
-    void saveFileFromRequestBody(const std::string& requestBody);
+    void saveFileFromRequestBody(const std::string& requestBody, const std::string& path);
 
     // DELETE
     void deleteFile(const std::string& path);
