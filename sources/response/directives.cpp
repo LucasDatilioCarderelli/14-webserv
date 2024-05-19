@@ -1,7 +1,7 @@
 #include "Response.hpp"
 
 
-std::string Response::generateDirectoryListing(const std::string& path) {
+std::string Response::generateDirectoryListing(const std::string& path, const std::string& uri) {
     std::string body = "<!DOCTYPE html><html><head><style>"
     "ul { list-style-type: none; }"
     "li { margin-bottom: 10px; }"
@@ -21,7 +21,7 @@ std::string Response::generateDirectoryListing(const std::string& path) {
     "    xhr.send();"
     "  }"
     "}"
-    "</script><ul><script>"
+    "</script><script>"
     "function submitForm(event) {"
     "  event.preventDefault();"
     "  var form = event.target;"
@@ -41,18 +41,18 @@ std::string Response::generateDirectoryListing(const std::string& path) {
     "  xhr.send(new FormData(form));"
     "}"
     "</script>"
-    "<form action='/uploads' method='post' enctype='multipart/form-data' onsubmit='submitForm(event);'>"
+    "<form action='" + uri + "' method='post' enctype='multipart/form-data' onsubmit='submitForm(event);'>"
     "<input type='file' name='file'>"
     "<input type='submit' value='Upload'>"
-    "</form><br><br>";
+    "</form><br><ul><br>";
     DIR *dir;
     struct dirent *ent;
     if ((dir = opendir(path.c_str())) != NULL) {
         while ((ent = readdir(dir)) != NULL) {
             std::string filename = std::string(ent->d_name);
             std::string escapedFilename = filename;
-            body += "<li><a href='/uploads/" + std::string(ent->d_name) + "'>" + std::string(ent->d_name) + "</a>";
-            body += " <a href='#' onclick='deleteFile(\"/uploads/" + escapedFilename + "\")'>";
+            body += "<li><a href='" + uri + "/" + std::string(ent->d_name) + "'>" + std::string(ent->d_name) + "</a>";
+            body += " <a href='#' onclick='deleteFile(\"" + uri + "/" + escapedFilename + "\")'>";
             body += " <img src='/static/assets/red_trash.png' alt='delete' width='20' height='20'></a></li>";
         }
         closedir(dir);

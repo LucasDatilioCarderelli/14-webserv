@@ -59,7 +59,7 @@ std::string Response::makeResponse(Request& request) {
         body = openFile(error_page);
     }
     else if (_config->autoindex == "on" && request.getMethod() == "GET") {
-        body = generateDirectoryListing(path);
+        body = generateDirectoryListing(path, request.getPath());
     } 
     else if (_config->httpRedirection != "") {
         body = makeRedirection(_config->httpRedirection);

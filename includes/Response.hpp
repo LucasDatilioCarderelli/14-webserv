@@ -37,7 +37,7 @@ public:
     DefaultConfig* getConfig(Request& request, ServerConfig& server);
 
     // directives
-    std::string generateDirectoryListing(const std::string& path);
+    std::string generateDirectoryListing(const std::string& path, const std::string& uri);
     std::string makeRedirection(const std::string& path);
 
     // GET
