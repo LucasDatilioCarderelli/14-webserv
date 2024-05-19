@@ -11,9 +11,11 @@
 
 class Cgi {
 private:
-    std::string         _cgi_path;
-    Request             _request;
     std::vector<char*>  _envArray;
+    Request             _request;
+    std::string         _cgi_path;
+    int                 _cgi_status;
+    std::string         _cgi_response;
 
 public:
     Cgi();
@@ -22,7 +24,10 @@ public:
 
     std::map<std::string, std::string> createEnv();
     std::vector<char*> createEnvArray();
-    std::string executeCgi();
+    void executeCgi();
+
+    int getCgiStatus() const { return _cgi_status; }
+    std::string getCgiResponse() const { return _cgi_response; }
 };
 
 #endif

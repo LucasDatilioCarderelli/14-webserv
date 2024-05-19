@@ -1,3 +1,4 @@
+#include <cerrno>
 #include "Cgi.hpp"
 
 Cgi::Cgi() {}
@@ -7,7 +8,10 @@ Cgi::~Cgi() {
     }
 }
 
-Cgi::Cgi(std::string cgi_path, Request& request) : _cgi_path(cgi_path), _request(request) {}
+Cgi::Cgi(std::string cgi_path, Request& request) : 
+    _request(request), _cgi_path(cgi_path), _cgi_status(200), _cgi_response("") {
+    executeCgi();
+} 
 
 std::map<std::string, std::string> Cgi::createEnv() {
     std::map<std::string, std::string> env;
@@ -37,21 +41,20 @@ std::vector<char*> Cgi::createEnvArray() {
     return envArray;
 }
 
-std::string Cgi::executeCgi() {
+void Cgi::executeCgi() {
     std::vector<char*> envArray = createEnvArray();
-    std::string output;
     int pipe_stdin[2];
     int pipe_stdout[2];
     int pid;
 
     if (pipe(pipe_stdin) == -1 || pipe(pipe_stdout) == -1) {
-        return "";
+        _cgi_status = 500;
     }
 
     pid = fork();
 
     if (pid == -1) {
-        return "";
+        _cgi_status = 500;
     }
     else if (pid == 0) {
         // Child process
@@ -65,33 +68,30 @@ std::string Cgi::executeCgi() {
 
         alarm(5);
         if (execve(_cgi_path.c_str(), argv, envArray.data()) == -1) {
-            return "";
+            _cgi_status = 500;
+            exit(-1);
         }
     }
     else {
-        // Parent process6
+        // Parent process
         close(pipe_stdin[0]);
         close(pipe_stdout[1]);
-
-        ssize_t bytesWritten = write(pipe_stdin[1], _request.getBody().c_str(), _request.getBody().size());
-        if (bytesWritten == -1) {
-            return "";
-        }
         close(pipe_stdin[1]);
 
         char buffer[1024];
         int bytesRead;
         while ((bytesRead = read(pipe_stdout[0], buffer, 1024)) > 0) {
-            output.append(buffer, bytesRead);
+            _cgi_response.append(buffer, bytesRead);
         }
         close(pipe_stdout[0]);
 
         int status;
         waitpid(pid, &status, 0);
-        if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
-            return "";
+        if (status != 0) {
+            _cgi_status = 500;
+        } 
+        if (WIFSIGNALED(status) == 1) {
+            _cgi_status = 504;
         }
     }
-
-    return output;
 }

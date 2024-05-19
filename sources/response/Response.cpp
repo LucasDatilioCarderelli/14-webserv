@@ -66,11 +66,12 @@ std::string Response::makeResponse(Request& request) {
     } 
     else if (_config->cgi != "") {
         Cgi cgi(_config->cgi, request);
-        body = cgi.executeCgi();
-        if (body.empty()) {
-            setStatus(500);
+        if (cgi.getCgiStatus() >= 400) {
+            setStatus(cgi.getCgiStatus());
             error_page = getErrorPage();
             body = openFile(error_page);
+        } else {
+            body = cgi.getCgiResponse();
         }
     } 
     else if (request.getMethod() == "GET") {
