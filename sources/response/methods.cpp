@@ -49,7 +49,7 @@ std::string Response::getErrorPage() {
 }
 
 // POST
-void Response::saveFileFromRequestBody(const std::string& requestBody) {
+void Response::saveFileFromRequestBody(const std::string& requestBody, const std::string& path) {
     std::istringstream requestStream(requestBody);
 
     std::string boundary;
@@ -68,19 +68,19 @@ void Response::saveFileFromRequestBody(const std::string& requestBody) {
     std::string blankLine;
     std::getline(requestStream, blankLine);
 
-    std::ofstream outputFile;
-    std::string filePath = "./www/uploads/" + fileName;
-    std::string fileExtension = fileName.substr(fileName.find_last_of(".") + 1);
-    if (fileExtension == "txt" || fileExtension == "html" || fileExtension == "css" || fileExtension == "js") {
-        outputFile.open(filePath.c_str());
-    } else {
-        outputFile.open(filePath.c_str(), std::ios::binary);
+    std::string filePath = path + fileName;
+    if (isFile(filePath)) {
+        setStatus(409);
+        return;
     }
+    
+    std::ofstream outputFile;
+    outputFile.open(filePath.c_str(), std::ios::binary);
 
     std::string body;
     std::getline(requestStream, body);
 
-    size_t body_pos = requestBody.find("\r\n\r\n", boundary.size() + 2) + 4; // 4 is the length of "\r\n\r\n"
+    size_t body_pos = requestBody.find("\r\n\r\n", boundary.size() + 2) + 4; // remove the "\r\n\r\n"
     size_t boundary_end_pos = requestBody.find(boundary + "--", body_pos);
 
     std::string fileContent = requestBody.substr(body_pos, boundary_end_pos - body_pos);

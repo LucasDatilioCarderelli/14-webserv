@@ -46,7 +46,7 @@ public:
     std::string getErrorPage();
 
     // POST
-    void saveFileFromRequestBody(const std::string& requestBody);
+    void saveFileFromRequestBody(const std::string& requestBody, const std::string& path);
 
     // DELETE
     void deleteFile(const std::string& path);
