@@ -10,10 +10,12 @@
 #include <cstdlib> // or #include <stdlib.h>
 #include <vector> // for std::vector
 #include "Logger.hpp" // For print logs
-// #include "Server.hpp"
 
 
 // Global logger object
 static Logger logger;
+
+// Global variable to control the server running state
+static volatile bool running = true;
 
 #endif

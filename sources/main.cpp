@@ -2,15 +2,15 @@
 #include "Server.hpp"
 #include "Config.hpp"
 
-
 static void sigint_handler(int sig) {
+    (void)sig;
     std::cout << std::endl;
     logger.log("SIGINT received ", Logger::WARNING);
-    exit(sig);
+    running = false;
 }
 
 static bool isConfigFile(const char *path) {
-    // verifica se o arquivo é .conf
+    // check if the file path ends with .conf
     std::string str(path);
     if (str.find(".conf") == std::string::npos) {
         return false;
@@ -40,9 +40,10 @@ int main (int argc, char **argv) {
     // Parse config file
     Config config(cofigFilePath);
 
-    // Iniciar o servidor
+    // Start the server
     Server server(config.servers);
     server.run();
 
+    logger.log("Webserv stopping", Logger::INFO);
     return 0;
 }

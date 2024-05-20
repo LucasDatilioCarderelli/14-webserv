@@ -6,7 +6,7 @@ Server::Server() {
 }
 
 Server::~Server() {
-    logger.log("Webserv stopping", Logger::INFO);
+    logger.log("Webserv stopped", Logger::INFO);
 }
 
 Server::Server(std::vector<ServerConfig> servers) : _servers(servers) {
@@ -73,7 +73,7 @@ void Server::accept_connections() {
     int timeout = (5 * 60 * 1000); // 5 minute (in milliseconds)
 
     // loop for accepting connections
-    while (true) {
+    while (running) {
         for (int i = 0; i < num_fds; i++) {
             poll_fds[i].fd = _sockets[i];
             poll_fds[i].events = POLLIN;
@@ -83,7 +83,8 @@ void Server::accept_connections() {
         int ret = poll(poll_fds, num_fds, timeout);
         if (ret < 0) {
             logger.log("poll failed", Logger::WARNING);
-            exit(-1);
+            running = false;
+            continue;
         } else if (ret == 0) {
             logger.log("poll timeout", Logger::INFO);
             continue;
