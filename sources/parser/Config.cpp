@@ -11,7 +11,7 @@ Config::Config(const std::string& configFilePath) {
 
     parseConfigFile();
     heritageServer();
-    // printServers(servers, true);
+    printServers(servers, true);
 
     if (servers.empty()) {
         logger.log("Error: no server block found in config file", Logger::ERROR);
@@ -56,6 +56,7 @@ void Config::heritageServer() {
 
 void Config::setConfigValue(DefaultConfig& config, std::string& line) {
     line = trimLine(line);
+    std::cout << line << std::endl;
     std::string key = line.substr(0, line.find(" "));
     std::string value = line.substr(line.find(" ") + 1);
     if (key == "root") {
@@ -107,7 +108,7 @@ ServerConfig Config::parseServer(std::string line) {
     server.server_name = "localhost";
     while (std::getline(_configFile, line) && line.find("}") == std::string::npos) {
         line = trimLine(line);
-        if (line.find("location ") != std::string::npos) {
+        if (line.find("location ") != std::string::npos && line[0] != '#') {
             server.location.push_back(parseLocation(line));
         } else {
             setConfigValue(server, line);
@@ -120,7 +121,7 @@ void Config::parseConfigFile() {
     std::string line;
     while (std::getline(_configFile, line)) {
         trimLine(line);
-        if (line.find("server ") != std::string::npos) {
+        if (line.find("server ") != std::string::npos && line[0] != '#') {
             servers.push_back(parseServer(line));
         }
     }
