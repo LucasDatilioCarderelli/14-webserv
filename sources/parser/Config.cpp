@@ -118,10 +118,13 @@ ServerConfig Config::parseServer(std::string line) {
 
 void Config::parseConfigFile() {
     std::string line;
+    size_t      pos;
     while (std::getline(_configFile, line)) {
-        trimLine(line);
-        if (line.find("server ") != std::string::npos) {
+        line = trimLine(line);
+        pos = line.find("server ");
+        if (pos != std::string::npos && pos == 0) {
             servers.push_back(parseServer(line));
+            printServers(servers, 1);
         }
     }
 }
