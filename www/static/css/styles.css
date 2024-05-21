@@ -58,6 +58,7 @@ footer {
     margin-top: auto;
     text-align: center;
     padding: 10px;
+    z-index: 1;
 }
 
 a {
